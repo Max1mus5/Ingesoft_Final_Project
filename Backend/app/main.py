@@ -1,6 +1,7 @@
 from fastapi import FastAPI
-from app.core.database import engine, Base
-from app.api.routers import auth, incapacidades, alertas, finanzas
+from Backend.Backend.app.api.routers import alertas, auth, incapacidades
+from Backend.Backend.app.core.database import engine, Base
+from Backend.Backend.app.api.routers import finanzas
 
 # El sistema inicializa la instancia API bajo los estándares REST.
 app = FastAPI(

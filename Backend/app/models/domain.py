@@ -4,7 +4,7 @@ import enum
 from sqlalchemy import Column, Integer, String, Boolean, Enum, Date, DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-from app.core.database import Base
+from Backend.Backend.app.core.database import Base
 
 class RolEnum(str, enum.Enum):
     """El sistema estandariza los roles de acceso requeridos por seguridad."""

@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import declarative_base
-from app.core.config import settings
+from Backend.Backend.app.core.config import settings
 
 # El sistema adapta la URL de conexión síncrona para el controlador asíncrono (asyncpg).
 async_database_url = settings.database_url.replace("postgresql://", "postgresql+asyncpg://")

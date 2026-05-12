@@ -5,8 +5,8 @@ import os
 # Agregamos la ruta base para que los mÃ³dulos se resuelvan como "app.xxx"
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from app.core.database import AsyncSessionLocal
-from app.models.domain import EPS
+from Backend.Backend.app.core.database import AsyncSessionLocal
+from Backend.Backend.app.models.domain import EPS
 from sqlalchemy.future import select
 
 async def mock_eps():

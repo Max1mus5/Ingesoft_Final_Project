@@ -3,9 +3,9 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from app.core.config import settings
-from app.core.database import get_db
-from app.models.domain import Usuario
+from Backend.Backend.app.core.config import settings
+from Backend.Backend.app.core.database import get_db
+from Backend.Backend.app.models.domain import Usuario
 from uuid import UUID
 
 # El sistema configura el esquema de OAuth2 para FastAPI

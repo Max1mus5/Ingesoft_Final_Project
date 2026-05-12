@@ -3,10 +3,10 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from app.core.database import get_db
-from app.models.domain import Incapacidad, Usuario, RolEnum, SoporteDocumental, EstadoIncapacidadEnum, EPS
-from app.schemas.domain import IncapacidadCreate, IncapacidadResponse, IncapacidadUpdateEstado
-from app.api.dependencies import get_current_user
+from Backend.Backend.app.core.database import get_db
+from Backend.Backend.app.models.domain import Incapacidad, Usuario, RolEnum, SoporteDocumental, EstadoIncapacidadEnum, EPS
+from Backend.Backend.app.schemas.domain import IncapacidadCreate, IncapacidadResponse, IncapacidadUpdateEstado
+from Backend.Backend.app.api.dependencies import get_current_user
 from sqlalchemy.orm import selectinload
 
 router = APIRouter()

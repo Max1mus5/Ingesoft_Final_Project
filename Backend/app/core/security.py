@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 from jose import jwt
 from passlib.context import CryptContext
-from app.core.config import settings
+from Backend.Backend.app.core.config import settings
 
 # El sistema inicializa el contexto de encriptación usando bcrypt.
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

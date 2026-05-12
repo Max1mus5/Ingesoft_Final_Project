@@ -3,11 +3,11 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from datetime import timedelta
-from app.core.database import get_db
-from app.models.domain import Usuario
-from app.core.security import verify_password, get_password_hash, create_access_token
-from app.schemas.domain import Token, UsuarioCreate, UsuarioResponse
-from app.core.config import settings
+from Backend.Backend.app.core.database import get_db
+from Backend.Backend.app.models.domain import Usuario
+from Backend.Backend.app.core.security import verify_password, get_password_hash, create_access_token
+from Backend.Backend.app.schemas.domain import Token, UsuarioCreate, UsuarioResponse
+from Backend.Backend.app.core.config import settings
 
 router = APIRouter()
 
