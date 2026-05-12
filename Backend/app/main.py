@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.api.routers import alertas, auth, incapacidades
 from app.core.database import engine, Base
 from app.api.routers import finanzas
@@ -8,6 +9,19 @@ app = FastAPI(
     title="Sistema Integral de Gestión de Incapacidades y Recobros",
     description="Backend encargado de la administración de incapacidades y trazabilidad (ACID)",
     version="1.0.0"
+)
+
+# El sistema configura CORS para permitir peticiones del frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://ingesoft-final-project.vercel.app",
+        "http://localhost:3000",
+        "http://localhost:3001",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(auth.router, prefix="/api/auth", tags=["Autenticación"])
