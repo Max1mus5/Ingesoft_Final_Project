@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop/
+x86_64/
+venv/
+.venv/
+.env
+
+# Entornos de desarrollo
+.vscode/
+.idea/
+
+# Sistema Operativo
+.DS_Store
+Thumbs.db
