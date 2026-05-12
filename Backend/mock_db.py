@@ -5,8 +5,8 @@ import os
 # Agregamos la ruta base para que los mÃ³dulos se resuelvan como "app.xxx"
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from Backend.Backend.app.core.database import AsyncSessionLocal
-from Backend.Backend.app.models.domain import EPS
+from app.core.database import AsyncSessionLocal
+from app.models.domain import EPS
 from sqlalchemy.future import select
 
 async def mock_eps():
@@ -18,9 +18,9 @@ async def mock_eps():
             nueva_eps = EPS(id=1, nombre="SURA", dias_limite_radicacion=150)
             db.add(nueva_eps)
             await db.commit()
-            print("El sistema inyectÃ³ la EPS 'SURA' con ID 1 en PostgreSQL.")
+            print("El sistema inyecta la EPS 'SURA' con ID 1 en PostgreSQL.")
         else:
-            print("El sistema detectÃ³ que la EPS ya existe.")
+            print("El sistema detecta que la EPS ya existe.")
 
 if __name__ == "__main__":
     asyncio.run(mock_eps())

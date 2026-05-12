@@ -2,7 +2,7 @@ from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from datetime import date, datetime
 from uuid import UUID
-from Backend.Backend.app.models.domain import RolEnum, EstadoIncapacidadEnum, TipoSoporteEnum
+from app.models.domain import RolEnum, EstadoIncapacidadEnum, TipoSoporteEnum
 
 # Esquemas de Usuario
 class UsuarioBase(BaseModel):

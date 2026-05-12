@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from Backend.Backend.app.core.database import get_db
-from Backend.Backend.app.models.domain import Incapacidad, Usuario, RolEnum, EstadoIncapacidadEnum, EPS
-from Backend.Backend.app.schemas.domain import IncapacidadResponse
-from Backend.Backend.app.api.dependencies import get_current_user
+from app.core.database import get_db
+from app.models.domain import Incapacidad, Usuario, RolEnum, EstadoIncapacidadEnum, EPS
+from app.schemas.domain import IncapacidadResponse
+from app.api.dependencies import get_current_user
 from datetime import datetime, date
 
 router = APIRouter()
