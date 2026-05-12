@@ -1,10 +1,9 @@
 /**
  * The system provides API service functions for disability management.
- * These services simulate backend communication using mock data.
+ * These services connect to the actual backend API.
  */
 
 import api from './api'
-import { mockUsers, mockDisabilities, mockAlerts } from './mock-data'
 import type {
   AuthResponse,
   LoginCredentials,
@@ -14,36 +13,40 @@ import type {
 } from './types'
 
 /**
- * The system simulates network delay for realistic UX testing.
+ * The system maps backend user response to frontend user type.
  */
-const simulateDelay = (ms: number = 800) => new Promise((resolve) => setTimeout(resolve, ms))
+const mapUserResponse = (response: any) => ({
+  id: response.id,
+  email: response.email,
+  name: response.nombre_completo,
+  role: response.rol as any,
+})
 
 /**
  * The system handles user authentication via POST /api/auth/login.
- * In production, this connects to the actual authentication endpoint.
  */
 export const authService = {
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
-    await simulateDelay()
+    const form = new URLSearchParams()
+    form.append('username', credentials.email)
+    form.append('password', credentials.password)
     
-    // The system simulates authentication by checking mock users
-    const user = mockUsers.find(
-      (u) => u.email === credentials.email && u.password === credentials.password
-    )
+    const response = await api.post('/auth/login', form, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    })
     
-    if (!user) {
-      throw new Error('Credenciales inválidas. Verifique su email y contraseña.')
-    }
-    
-    // The system generates a mock JWT token
-    const token = btoa(JSON.stringify({ userId: user.id, role: user.role, exp: Date.now() + 86400000 }))
-    
-    // The system returns user data without password
-    const { password: _, ...userData } = user
+    const { access_token, token_type } = response.data
+    const token = access_token
+    const payload = JSON.parse(atob(token.split('.')[1]))
     
     return {
       token,
-      user: userData,
+      user: {
+        id: payload.sub,
+        role: payload.rol,
+        email: credentials.email,
+        name: '',
+      }
     }
   },
   
@@ -54,39 +57,21 @@ export const authService = {
     role: string
     password: string 
   }): Promise<AuthResponse> => {
-    await simulateDelay()
-    
-    // The system checks if user already exists
-    const existingUser = mockUsers.find((u) => u.email === data.email)
-    if (existingUser) {
-      throw new Error('Ya existe un usuario con este correo electrónico.')
-    }
-    
-    // The system creates a new user
-    const newUser = {
-      id: String(mockUsers.length + 1),
+    const response = await api.post('/auth/registrar', {
+      nombre_completo: data.name,
       email: data.email,
-      password: data.password,
-      name: data.name,
-      role: data.role as any,
-      department: undefined,
-    }
-    
-    mockUsers.push(newUser)
-    
-    // The system generates a mock JWT token
-    const token = btoa(JSON.stringify({ userId: newUser.id, role: newUser.role, exp: Date.now() + 86400000 }))
-    
-    const { password: _, ...userData } = newUser
+      documento: data.document,
+      rol: data.role,
+      password: data.password
+    })
     
     return {
-      token,
-      user: userData,
+      token: '',
+      user: mapUserResponse(response.data)
     }
   },
   
   logout: () => {
-    // The system clears stored authentication data
     localStorage.removeItem('auth_token')
     localStorage.removeItem('user_data')
   },
@@ -96,69 +81,113 @@ export const authService = {
  * The system handles disability CRUD operations via /api/incapacidades.
  */
 export const disabilityService = {
-  /**
-   * The system fetches all disabilities via GET /api/incapacidades/.
-   */
   getAll: async (): Promise<Disability[]> => {
-    await simulateDelay()
-    // The system returns mock disabilities for simulation
-    return [...mockDisabilities]
+    const response = await api.get('/incapacidades')
+    return response.data.map((item: any) => ({
+      id: item.id,
+      employeeId: item.colaborador_id,
+      employeeName: '',
+      employeeDocument: '',
+      startDate: item.fecha_inicio,
+      endDate: item.fecha_fin,
+      diagnosis: '',
+      diagnosisCode: item.diagnostico_cie10,
+      eps: '',
+      totalDays: item.dias_otorgados,
+      status: item.estado,
+      createdAt: item.fecha_registro,
+      updatedAt: '',
+      expirationDate: '',
+      daysUntilExpiration: 0,
+    }))
   },
   
-  /**
-   * The system fetches a single disability by ID.
-   */
-  getById: async (id: string): Promise<Disability | undefined> => {
-    await simulateDelay(500)
-    return mockDisabilities.find((d) => d.id === id)
-  },
-  
-  /**
-   * The system fetches traceability logs via GET /api/incapacidades/{id}/trazabilidad.
-   */
-  getTraceability: async (id: string): Promise<{ logs: any[] }> => {
-    await simulateDelay(300)
+  getById: async (id: string): Promise<Disability> => {
+    const response = await api.get(`/incapacidades/${id}`)
+    const item = response.data
     return {
-      logs: [
-        { evento: 'REGISTRADA', fecha: new Date().toISOString() },
-        { evento: 'RADICADA', fecha: new Date().toISOString() },
-      ]
+      id: item.id,
+      employeeId: item.colaborador_id,
+      employeeName: '',
+      employeeDocument: '',
+      startDate: item.fecha_inicio,
+      endDate: item.fecha_fin,
+      diagnosis: '',
+      diagnosisCode: item.diagnostico_cie10,
+      eps: '',
+      totalDays: item.dias_otorgados,
+      status: item.estado,
+      createdAt: item.fecha_registro,
+      updatedAt: '',
+      expirationDate: '',
+      daysUntilExpiration: 0,
     }
   },
   
-  /**
-   * The system updates disability status via PATCH /api/incapacidades/{id}/estado.
-   */
+  getTraceability: async (id: string): Promise<{ logs: any[] }> => {
+    const response = await api.get(`/incapacidades/${id}/trazabilidad`)
+    return response.data
+  },
+  
   updateStatus: async (id: string, status: DisabilityStatus): Promise<Disability> => {
-    await simulateDelay()
-    
-    const disability = mockDisabilities.find((d) => d.id === id)
-    if (!disability) {
-      throw new Error('Incapacidad no encontrada')
+    const response = await api.patch(`/incapacidades/${id}/estado`, { estado: status })
+    const item = response.data
+    return {
+      id: item.id,
+      employeeId: item.colaborador_id,
+      employeeName: '',
+      employeeDocument: '',
+      startDate: item.fecha_inicio,
+      endDate: item.fecha_fin,
+      diagnosis: '',
+      diagnosisCode: item.diagnostico_cie10,
+      eps: '',
+      totalDays: item.dias_otorgados,
+      status: item.estado,
+      createdAt: item.fecha_registro,
+      updatedAt: '',
+      expirationDate: '',
+      daysUntilExpiration: 0,
     }
-    
-    // The system simulates status update
-    disability.status = status
-    disability.updatedAt = new Date().toISOString().split('T')[0]
-    
-    return { ...disability }
   },
   
-  /**
-   * The system creates a new disability via POST /api/incapacidades/.
-   */
-  create: async (data: Omit<Disability, 'id' | 'createdAt' | 'updatedAt'>): Promise<Disability> => {
-    await simulateDelay()
-    
-    const newDisability: Disability = {
-      ...data,
-      id: `INC-${String(mockDisabilities.length + 1).padStart(3, '0')}`,
-      createdAt: new Date().toISOString().split('T')[0],
-      updatedAt: new Date().toISOString().split('T')[0],
+  create: async (data: {
+    employeeDocument: string
+    employeeName: string
+    epsId: string
+    startDate: string
+    endDate: string
+    totalDays: number
+    diagnosis: string
+    diagnosisCode: string
+  }): Promise<Disability> => {
+    const response = await api.post('/incapacidades', {
+      colaborador_documento: data.employeeDocument,
+      eps_id: parseInt(data.epsId),
+      fecha_inicio: data.startDate,
+      fecha_fin: data.endDate,
+      dias_otorgados: data.totalDays,
+      diagnostico_cie10: data.diagnosisCode,
+      soportes: [{ tipo_documento: 'CERTIFICADO' }]
+    })
+    const item = response.data
+    return {
+      id: item.id,
+      employeeId: item.colaborador_id,
+      employeeName: '',
+      employeeDocument: '',
+      startDate: item.fecha_inicio,
+      endDate: item.fecha_fin,
+      diagnosis: '',
+      diagnosisCode: item.diagnostico_cie10,
+      eps: '',
+      totalDays: item.dias_otorgados,
+      status: item.estado,
+      createdAt: item.fecha_registro,
+      updatedAt: '',
+      expirationDate: '',
+      daysUntilExpiration: 0,
     }
-    
-    mockDisabilities.push(newDisability)
-    return newDisability
   },
 }
 
@@ -166,12 +195,9 @@ export const disabilityService = {
  * The system handles expiration alerts via /api/alertas/vencimientos.
  */
 export const alertService = {
-  /**
-   * The system fetches expiration alerts via GET /api/alertas/vencimientos.
-   */
   getExpirationAlerts: async (): Promise<ExpirationAlert[]> => {
-    await simulateDelay(600)
-    return [...mockAlerts]
+    const response = await api.get('/alertas/vencimientos')
+    return response.data
   },
 }
 
@@ -179,22 +205,29 @@ export const alertService = {
  * The system handles financial conciliation via /api/finanzas/conciliar.
  */
 export const financeService = {
-  /**
-   * The system processes payment conciliation via POST /api/finanzas/conciliar.
-   */
   conciliate: async (disabilityId: string, amountPaid: number): Promise<Disability> => {
-    await simulateDelay()
-    
-    const disability = mockDisabilities.find((d) => d.id === disabilityId)
-    if (!disability) {
-      throw new Error('Incapacidad no encontrada')
+    const response = await api.post('/finanzas/conciliar', {
+      incapacidad_id: disabilityId,
+      valor_pagado: amountPaid
+    })
+    const item = response.data
+    return {
+      id: item.id,
+      employeeId: item.colaborador_id,
+      employeeName: '',
+      employeeDocument: '',
+      startDate: item.fecha_inicio,
+      endDate: item.fecha_fin,
+      diagnosis: '',
+      diagnosisCode: item.diagnostico_cie10,
+      eps: '',
+      totalDays: item.dias_otorgados,
+      status: item.estado,
+      createdAt: item.fecha_registro,
+      updatedAt: '',
+      expirationDate: '',
+      daysUntilExpiration: 0,
     }
-    
-    // The system updates status to PAGADA after conciliation
-    disability.status = 'PAGADA'
-    disability.updatedAt = new Date().toISOString().split('T')[0]
-    
-    return { ...disability }
   },
 }
 

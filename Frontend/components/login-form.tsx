@@ -20,17 +20,14 @@ export function LoginForm() {
   const router = useRouter()
   const { setAuth, setLoading, isLoading } = useAuthStore()
   
-  const [email, setEmail] = useState('')
+  const [document, setDocument] = useState('')
   const [password, setPassword] = useState('')
   
   /**
    * The system validates that all required fields are complete.
    */
-  const isFormValid = email.trim() !== '' && password.trim() !== ''
+const isFormValid = document.trim() !== '' && password.trim() !== ''
   
-  /**
-   * The system handles form submission and authentication.
-   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -42,14 +39,11 @@ export function LoginForm() {
     setLoading(true)
     
     try {
-      // The system attempts authentication via the auth service
-      const response = await authService.login({ email, password })
+      const response = await authService.login({ email: document, password })
       
-      // The system stores authentication data on success
       setAuth(response.user, response.token)
       
-      // The system displays success notification
-      toast.success(`Bienvenido, ${response.user.name}`)
+      toast.success(`Bienvenido, ${response.user.name || 'Usuario'}`)
       
       // The system redirects to dashboard based on user role
       router.push('/dashboard')
@@ -87,68 +81,66 @@ export function LoginForm() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* The system renders the email input field */}
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-[#E0E0E0]">
-                Correo electrónico
-              </Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9E9E9E]" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="usuario@empresa.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="border-[#2A2A2A] bg-[#121212] pl-10 text-[#E0E0E0] placeholder:text-[#9E9E9E]/50 focus:border-[#00E5FF] focus:ring-[#00E5FF]"
-                  disabled={isLoading}
-                  autoComplete="email"
-                />
+<Label htmlFor="document" className="text-[#E0E0E0]">
+                 Documento
+               </Label>
+               <div className="relative">
+                 <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9E9E9E]" />
+                 <Input
+                   id="document"
+                   type="text"
+                   placeholder="12345678"
+                   value={document}
+                   onChange={(e) => setDocument(e.target.value)}
+                   className="border-[#2A2A2A] bg-[#121212] pl-10 text-[#E0E0E0] placeholder:text-[#9E9E9E]/50 focus:border-[#00E5FF] focus:ring-[#00E5FF]"
+                   disabled={isLoading}
+                   autoComplete="username"
+                 />
               </div>
             </div>
             
             {/* The system renders the password input field */}
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-[#E0E0E0]">
-                Contraseña
-              </Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9E9E9E]" />
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="border-[#2A2A2A] bg-[#121212] pl-10 text-[#E0E0E0] placeholder:text-[#9E9E9E]/50 focus:border-[#00E5FF] focus:ring-[#00E5FF]"
-                  disabled={isLoading}
-                  autoComplete="current-password"
-                />
-              </div>
-            </div>
-            
-            {/* The system renders the submit button with loading state */}
-            <Button
-              type="submit"
-              className="w-full bg-[#00E5FF] font-medium text-[#121212] hover:bg-[#00E5FF]/90 disabled:opacity-50"
-              disabled={!isFormValid || isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Iniciando sesión...
-                </>
-              ) : (
-                'Iniciar sesión'
-              )}
-            </Button>
-          </form>
-          
-{/* The system displays demo credentials for testing */}
+<Label htmlFor="password" className="text-[#E0E0E0]">
+                 Contraseña
+               </Label>
+               <div className="relative">
+                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9E9E9E]" />
+                 <Input
+                   id="password"
+                   type="password"
+                   placeholder="••••••••"
+                   value={password}
+                   onChange={(e) => setPassword(e.target.value)}
+                   className="border-[#2A2A2A] bg-[#121212] pl-10 text-[#E0E0E0] placeholder:text-[#9E9E9E]/50 focus:border-[#00E5FF] focus:ring-[#00E5FF]"
+                   disabled={isLoading}
+                   autoComplete="current-password"
+                 />
+               </div>
+             </div>
+             
+             <Button
+               type="submit"
+               className="w-full bg-[#00E5FF] font-medium text-[#121212] hover:bg-[#00E5FF]/90 disabled:opacity-50"
+               disabled={!isFormValid || isLoading}
+             >
+               {isLoading ? (
+                 <>
+                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                   Iniciando sesión...
+                 </>
+               ) : (
+                 'Iniciar sesión'
+               )}
+             </Button>
+           </form>
+           
            <div className="mt-6 rounded-lg border border-[#2A2A2A] bg-[#121212] p-4">
              <p className="mb-2 text-xs font-medium text-[#9E9E9E]">Credenciales de prueba:</p>
              <div className="space-y-1 text-xs text-[#9E9E9E]">
-               <p><span className="text-[#00E5FF]">Admin:</span> admin@empresa.com / admin123</p>
-               <p><span className="text-[#00E5FF]">RRHH:</span> rrhh@empresa.com / rrhh123</p>
-               <p><span className="text-[#00E5FF]">Contabilidad:</span> contabilidad@empresa.com / conta123</p>
+               <p><span className="text-[#00E5FF]">Admin:</span> documento "12345678" / password "admin123"</p>
+               <p><span className="text-[#00E5FF]">RRHH:</span> documento "87654321" / password "rrhh123"</p>
+               <p><span className="text-[#00E5FF]">Contabilidad:</span> documento "11223344" / password "conta123"</p>
              </div>
            </div>
            
