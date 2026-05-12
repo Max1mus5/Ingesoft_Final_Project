@@ -14,28 +14,37 @@ router = APIRouter()
 @router.post("/registrar", response_model=UsuarioResponse, status_code=status.HTTP_201_CREATED)
 async def registrar_usuario(user_in: UsuarioCreate, db: AsyncSession = Depends(get_db)):
     """El sistema registra un nuevo usuario asignándole las credenciales mediante hash de forma segura."""
-    result = await db.execute(select(Usuario).filter(Usuario.documento == user_in.documento))
-    user_exists = result.scalars().first()
-    if user_exists:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="El sistema advierte que ya existe un usuario con este documento."
+    try:
+        result = await db.execute(select(Usuario).filter(Usuario.documento == user_in.documento))
+        user_exists = result.scalars().first()
+        if user_exists:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="El sistema advierte que ya existe un usuario con este documento."
+            )
+        
+        hashed_pass = get_password_hash(user_in.password)
+        nuevo_usuario = Usuario(
+            documento=user_in.documento,
+            nombre_completo=user_in.nombre_completo,
+            email=user_in.email,
+            hashed_password=hashed_pass,
+            rol=user_in.rol
         )
-    
-    hashed_pass = get_password_hash(user_in.password)
-    nuevo_usuario = Usuario(
-        documento=user_in.documento,
-        nombre_completo=user_in.nombre_completo,
-        email=user_in.email,
-        hashed_password=hashed_pass,
-        rol=user_in.rol
-    )
-    
-    db.add(nuevo_usuario)
-    await db.commit()
-    await db.refresh(nuevo_usuario)
-    
-    return nuevo_usuario
+        
+        db.add(nuevo_usuario)
+        await db.commit()
+        await db.refresh(nuevo_usuario)
+        
+        return nuevo_usuario
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error al crear usuario: {str(e)}"
+        )
 
 @router.post("/login", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):

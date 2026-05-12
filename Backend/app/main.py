@@ -1,8 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routers import alertas, auth, incapacidades
-from app.core.database import engine, Base
+from app.core.database import engine, Base, AsyncSessionLocal
 from app.api.routers import finanzas
+from app.models.domain import EPS
+from sqlalchemy.future import select
 
 # El sistema inicializa la instancia API bajo los estándares REST.
 app = FastAPI(
@@ -34,6 +36,15 @@ async def startup_event():
     """El sistema inyecta la estructura relacional a base de datos en instancias de desarrollo/testeo."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    
+    # El sistema crea EPS por defecto si no existe
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(select(EPS).filter(EPS.id == 1))
+        if not result.scalars().first():
+            default_eps = EPS(id=1, nombre="SURA", dias_limite_radicacion=150)
+            db.add(default_eps)
+            await db.commit()
+            print("El sistema creó EPS por defecto: SURA")
 
 @app.get("/")
 async def root_status():
