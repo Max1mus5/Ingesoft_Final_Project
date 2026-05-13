@@ -46,11 +46,24 @@ DATABASE_URL=postgresql+asyncpg://<usuario>:<password>@<host>/<dbname>?ssl=requi
 SECRET_KEY=tu_super_secreto_aqui_para_jwt
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
+API_BASE_URL=http://localhost:8000
 ```
 
 > **Nota:** Este archivo no debe integrarse al control de versiones de Git debido a las políticas pautadas en nuestro archivo `.gitignore`.
 
-### 4. Lanzar el Servidor Backend
+### 4. Configuración en Producción (Render)
+
+Cuando depliegues a Render, asegúrate de configurar estas variables de entorno en el dashboard:
+
+- `DATABASE_URL`: Tu URL de Neon PostgreSQL
+- `SECRET_KEY`: Una clave secreta fuerte (pode ser generada automáticamente por Render)
+- `ALGORITHM`: HS256
+- `ACCESS_TOKEN_EXPIRE_MINUTES`: 30
+- **`API_BASE_URL`**: La URL completa de tu backend en Render (ej: `https://incapacidades-backend.onrender.com`)
+
+Este último es **crítico** para que los archivos cargados se sirvan correctamente desde la URL absoluta del servidor.
+
+### 5. Lanzar el Servidor Backend
 
 Corre el script `uvicorn` que lanzará el servidor expuesto en el puerto 8000:
 

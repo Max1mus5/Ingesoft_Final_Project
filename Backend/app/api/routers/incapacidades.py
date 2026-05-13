@@ -53,7 +53,9 @@ def _format_soporte_response(soporte: SoporteDocumental) -> dict:
     url_archivo = soporte.url_archivo
     # Si la URL comienza con /, es una ruta relativa y necesita el URL base
     if url_archivo and url_archivo.startswith('/'):
-        url_archivo = f"{settings.api_base_url}{url_archivo}"
+        # Usar api_base_url si está configurado, si no usar localhost
+        base_url = settings.api_base_url if settings.api_base_url else "http://localhost:8000"
+        url_archivo = f"{base_url}{url_archivo}"
     return {
         "id": str(soporte.id),
         "tipo_documento": soporte.tipo_documento.value,

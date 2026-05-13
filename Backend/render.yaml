@@ -16,3 +16,5 @@ services:
         value: HS256
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
         value: 30
+      - key: API_BASE_URL
+        sync: false # Ingresa la URL completa del backend en Render, ej: https://incapacidades-backend.onrender.com
