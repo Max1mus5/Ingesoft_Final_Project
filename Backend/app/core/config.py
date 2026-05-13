@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     secret_key: str
     algorithm: str
     access_token_expire_minutes: int
+    api_base_url: str = "http://localhost:8000"
 
     class Config:
         """El sistema enlaza la configuración al archivo de entorno subyacente."""

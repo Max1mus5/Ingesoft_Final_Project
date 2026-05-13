@@ -45,6 +45,18 @@ interface DisabilityTableProps {
   isLoading?: boolean
 }
 
+const ALL_STATUSES: DisabilityStatus[] = [
+  'REGISTRADA',
+  'TRANSCRITA',
+  'RADICADA',
+  'EN_MORA',
+  'APROBADA',
+  'PAGADA',
+  'RECHAZADA',
+  'GLOSADA',
+  'ARCHIVADA',
+]
+
 export function DisabilityTable({
   disabilities,
   userRole,
@@ -140,7 +152,7 @@ export function DisabilityTable({
                   Todos los estados
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-[#2A2A2A]" />
-                {(['RADICADA', 'EN_MORA', 'APROBADA', 'PAGADA', 'RECHAZADA'] as DisabilityStatus[]).map(
+                {ALL_STATUSES.map(
                   (status) => (
                     <DropdownMenuItem
                       key={status}
@@ -254,8 +266,9 @@ export function DisabilityTable({
                               <DropdownMenuLabel className="text-[#9E9E9E] text-xs">
                                 Cambiar estado
                               </DropdownMenuLabel>
-                              {(['RADICADA', 'APROBADA', 'RECHAZADA'] as DisabilityStatus[]).map(
-                                (status) => (
+                              {ALL_STATUSES
+                                .filter((s) => s !== disability.status)
+                                .map((status) => (
                                   <DropdownMenuItem
                                     key={status}
                                     className="text-[#E0E0E0] focus:bg-[#2A2A2A] focus:text-[#E0E0E0]"
@@ -263,8 +276,7 @@ export function DisabilityTable({
                                   >
                                     <StatusBadge status={status} className="mr-2" />
                                   </DropdownMenuItem>
-                                )
-                              )}
+                                ))}
                             </>
                           )}
                           

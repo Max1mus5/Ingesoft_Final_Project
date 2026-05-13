@@ -11,7 +11,16 @@ export type UserRole = 'ADMIN' | 'GESTION_HUMANA' | 'CONTABILIDAD' | 'COLABORADO
 /**
  * The system defines disability status values for tracking.
  */
-export type DisabilityStatus = 'RADICADA' | 'EN_MORA' | 'APROBADA' | 'PAGADA' | 'RECHAZADA'
+export type DisabilityStatus =
+  | 'REGISTRADA'
+  | 'TRANSCRITA'
+  | 'RADICADA'
+  | 'EN_MORA'
+  | 'APROBADA'
+  | 'PAGADA'
+  | 'RECHAZADA'
+  | 'GLOSADA'
+  | 'ARCHIVADA'
 
 /**
  * The system defines the user data structure returned by authentication.

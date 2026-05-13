@@ -17,6 +17,14 @@ interface StatusBadgeProps {
  * The system maps status values to their respective colors.
  */
 const statusConfig: Record<DisabilityStatus, { label: string; className: string }> = {
+  REGISTRADA: {
+    label: 'Registrada',
+    className: 'bg-[#29B6F6]/10 text-[#29B6F6] border-[#29B6F6]/30',
+  },
+  TRANSCRITA: {
+    label: 'Transcrita',
+    className: 'bg-[#FFA726]/10 text-[#FFA726] border-[#FFA726]/30',
+  },
   RADICADA: {
     label: 'Radicada',
     className: 'bg-[#00E5FF]/10 text-[#00E5FF] border-[#00E5FF]/30',
@@ -37,10 +45,19 @@ const statusConfig: Record<DisabilityStatus, { label: string; className: string 
     label: 'Rechazada',
     className: 'bg-[#FF5252]/10 text-[#FF5252] border-[#FF5252]/30',
   },
+  GLOSADA: {
+    label: 'Glosada',
+    className: 'bg-[#FF7043]/10 text-[#FF7043] border-[#FF7043]/30',
+  },
+  ARCHIVADA: {
+    label: 'Archivada',
+    className: 'bg-[#9E9E9E]/10 text-[#9E9E9E] border-[#9E9E9E]/30',
+  },
 }
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
-  const config = statusConfig[status]
+  const normalizedStatus = String(status || '').trim().toUpperCase() as DisabilityStatus
+  const config = statusConfig[normalizedStatus]
   
   // Fallback if status is invalid/undefined
   if (!config) {

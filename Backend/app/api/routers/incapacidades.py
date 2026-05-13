@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.core.database import get_db
+from app.core.config import settings
 from app.models.domain import Incapacidad, Usuario, RolEnum, SoporteDocumental, EstadoIncapacidadEnum, EPS
 from app.schemas.domain import IncapacidadCreate, IncapacidadResponse, IncapacidadUpdateEstado
 from app.api.dependencies import get_current_user
@@ -74,12 +75,18 @@ async def registrar_incapacidad(
                     file_path = os.path.join(uploads_dir, filename)
                     with open(file_path, 'wb') as f:
                         f.write(base64.b64decode(data))
-                    url_ficticia = f"/uploads/{filename}"
+                    # Use absolute URL so frontend (deployed en Vercel) pueda acceder
+                    base = settings.api_base_url.rstrip('/')
+                    url_ficticia = f"{base}/uploads/{filename}"
                 except Exception:
                     url_ficticia = f"https://s3.ficticio.com/soportes/{uuid.uuid4()}.pdf"
             elif archivo_b64 and isinstance(archivo_b64, str):
-                # Si es una URL ya provisionada, úsala directamente
-                url_ficticia = archivo_b64
+                # Si es una URL ya provisionada, úsala directamente. Si es relativa, conviértela a absoluta.
+                if archivo_b64.startswith('/'):
+                    base = settings.api_base_url.rstrip('/')
+                    url_ficticia = f"{base}{archivo_b64}"
+                else:
+                    url_ficticia = archivo_b64
             else:
                 url_ficticia = f"https://s3.ficticio.com/soportes/{uuid.uuid4()}.pdf"
 

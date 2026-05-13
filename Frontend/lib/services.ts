@@ -102,7 +102,23 @@ export const disabilityService = {
       soportes: item.soportes?.map((s: any) => ({
         id: s.id,
         tipoDocumento: s.tipo_documento,
-        urlArchivo: s.url_archivo
+        urlArchivo: (() => {
+          const raw = s.url_archivo || ''
+          const apiRoot = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(/\/api\/?$/, '')
+          try {
+            const parsed = new URL(raw)
+            // If the URL points to the frontend origin (e.g., deployed on Vercel under same domain),
+            // replace origin with API root so the file is served by backend
+            if (typeof window !== 'undefined' && parsed.origin === window.location.origin) {
+              return `${apiRoot}${parsed.pathname}${parsed.search}`
+            }
+            return raw
+          } catch (e) {
+            // raw is relative or invalid as absolute URL
+            if (raw.startsWith('/')) return `${apiRoot}${raw}`
+            return raw
+          }
+        })(),
       })) || []
     }))
   },
@@ -129,7 +145,12 @@ export const disabilityService = {
       soportes: item.soportes?.map((s: any) => ({
         id: s.id,
         tipoDocumento: s.tipo_documento,
-        urlArchivo: s.url_archivo
+        urlArchivo: (() => {
+          const raw = s.url_archivo || ''
+          const apiRoot = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001').replace(/\/api\/?$/, '')
+          if (raw.startsWith('/')) return `${apiRoot}${raw}`
+          return raw
+        })(),
       })) || []
     }
   },

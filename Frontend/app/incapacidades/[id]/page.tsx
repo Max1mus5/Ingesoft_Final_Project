@@ -32,6 +32,7 @@ function DisabilityDetailContent() {
   const [disability, setDisability] = useState<Disability | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const [previewSupport, setPreviewSupport] = useState<SoporteDocumental | null>(null)
 
   useEffect(() => {
     if (disabilityId) {
@@ -180,12 +181,12 @@ function DisabilityDetailContent() {
                             </div>
                           </div>
                           <div className="flex gap-2">
-                            {soporte.urlArchivo && (soporte.urlArchivo.endsWith('.pdf') || soporte.urlArchivo.includes('pdf')) && (
+                            {soporte.urlArchivo && (
                               <Button
                                 size="sm"
                                 variant="ghost"
                                 className="text-[#00E5FF] hover:bg-[#1A1A1A]"
-                                onClick={() => window.open(soporte.urlArchivo, '_blank')}
+                                onClick={() => setPreviewSupport(soporte)}
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
@@ -208,6 +209,55 @@ function DisabilityDetailContent() {
                           </div>
                         </div>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Preview modal for soportes */}
+                {previewSupport && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+                    <div className="mx-auto max-w-3xl w-full bg-[#0f0f0f] rounded-lg overflow-hidden">
+                      <div className="flex items-center justify-between p-3 border-b border-[#2A2A2A]">
+                        <div className="flex items-center gap-3">
+                          <FileText className="h-5 w-5 text-[#00E5FF]" />
+                          <div>
+                            <p className="text-sm text-[#E0E0E0]">{previewSupport.tipoDocumento}</p>
+                            <p className="text-xs text-[#9E9E9E]">{previewSupport.urlArchivo.split('/').pop()}</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-[#00E5FF]"
+                            onClick={() => {
+                              const link = document.createElement('a')
+                              link.href = previewSupport.urlArchivo
+                              link.download = previewSupport.urlArchivo.split('/').pop() || 'documento'
+                              document.body.appendChild(link)
+                              link.click()
+                              document.body.removeChild(link)
+                            }}
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setPreviewSupport(null)}>
+                            Cerrar
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="h-[80vh] bg-[#000]">
+                        {/* If PDF, embed; otherwise show iframe as fallback */}
+                        {previewSupport.urlArchivo.toLowerCase().endsWith('.pdf') ? (
+                          <iframe
+                            src={previewSupport.urlArchivo}
+                            className="w-full h-full"
+                            title="Previsualización"
+                          />
+                        ) : (
+                          <iframe src={previewSupport.urlArchivo} className="w-full h-full" title="Previsualización" />
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}

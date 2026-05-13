@@ -26,7 +26,7 @@ export default function ProfilePage() {
 
 function ProfileContent() {
   const router = useRouter()
-  const { user } = useAuthStore()
+  const { user, token, setAuth } = useAuthStore()
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -52,6 +52,18 @@ function ProfileContent() {
       // The system updates the profile in local storage
       // Note: Backend endpoint for profile update should be implemented
       localStorage.setItem('user_profile', JSON.stringify(formData))
+      // Update auth store so UI reflects changes immediately
+      if (user) {
+        const updatedUser = {
+          ...user,
+          name: formData.name,
+          email: formData.email,
+          department: formData.department,
+        }
+        setAuth(updatedUser as any, token || '')
+        // persist user_data for other utilities
+        localStorage.setItem('user_data', JSON.stringify(updatedUser))
+      }
       toast.success('Perfil actualizado correctamente')
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Error al actualizar el perfil'
