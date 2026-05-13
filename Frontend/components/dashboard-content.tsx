@@ -5,7 +5,7 @@
  * This component orchestrates the disability table and alerts panel.
  */
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { RefreshCw, Plus, FileBarChart } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -15,6 +15,7 @@ import { AlertsPanel } from './alerts-panel'
 import { disabilityService, alertService } from '@/lib/services'
 import { useAuthStore } from '@/lib/auth-store'
 import { useRouter } from 'next/navigation'
+import { useAutoRefresh, useRefreshEvent } from '@/hooks/use-auto-refresh'
 import type { Disability, ExpirationAlert, DisabilityStatus } from '@/lib/types'
 
 export function DashboardContent() {
@@ -27,16 +28,9 @@ export function DashboardContent() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   
   /**
-   * The system fetches initial data on component mount.
-   */
-  useEffect(() => {
-    fetchData()
-  }, [])
-  
-  /**
    * The system fetches disabilities and alerts from the API.
    */
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       // The system fetches disabilities via GET /api/incapacidades/
       const disabilitiesData = await disabilityService.getAll()
@@ -48,20 +42,36 @@ export function DashboardContent() {
       setAlerts(alertsData)
       setIsLoadingAlerts(false)
     } catch (error) {
+      console.error('Error fetching dashboard data:', error)
       toast.error('Error al cargar los datos')
       setIsLoadingDisabilities(false)
       setIsLoadingAlerts(false)
     }
-  }
+  }, [])
+  
+  /**
+   * The system sets up auto-refresh and event listeners for real-time updates.
+   */
+  useAutoRefresh(fetchData, 30000, true)
+  
+  /**
+   * The system listens for disability creation events and refreshes.
+   */
+  useRefreshEvent('disabilityCreated', fetchData)
   
   /**
    * The system handles manual data refresh.
    */
   const handleRefresh = async () => {
     setIsRefreshing(true)
-    await fetchData()
-    setIsRefreshing(false)
-    toast.success('Datos actualizados')
+    try {
+      await fetchData()
+      toast.success('Datos actualizados')
+    } catch (error) {
+      toast.error('Error al actualizar los datos')
+    } finally {
+      setIsRefreshing(false)
+    }
   }
   
   /**

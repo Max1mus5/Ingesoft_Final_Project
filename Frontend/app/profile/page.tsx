@@ -49,10 +49,14 @@ function ProfileContent() {
     setIsLoading(true)
     
     try {
-      // The system would update profile via API in production
+      // The system updates the profile in local storage
+      // Note: Backend endpoint for profile update should be implemented
+      localStorage.setItem('user_profile', JSON.stringify(formData))
       toast.success('Perfil actualizado correctamente')
     } catch (error) {
-      toast.error('Error al actualizar el perfil')
+      const message = error instanceof Error ? error.message : 'Error al actualizar el perfil'
+      console.error('Error updating profile:', error)
+      toast.error(message)
     } finally {
       setIsLoading(false)
     }

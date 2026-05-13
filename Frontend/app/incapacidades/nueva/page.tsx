@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ProtectedRoute } from '@/components/protected-route'
+import { disabilityService } from '@/lib/services'
 
 export default function NewDisabilityPage() {
   return (
@@ -44,11 +45,32 @@ function NewDisabilityContent() {
     setIsLoading(true)
     
     try {
-      // The system would send to POST /api/incapacidades/ in production
+      // Validate required fields
+      if (!formData.employeeDocument || !formData.employeeName || !formData.startDate || 
+          !formData.endDate || !formData.totalDays || !formData.diagnosisCode) {
+        toast.error('Por favor complete todos los campos requeridos')
+        setIsLoading(false)
+        return
+      }
+
+      // Call the actual disability service
+      await disabilityService.create({
+        employeeDocument: formData.employeeDocument,
+        employeeName: formData.employeeName,
+        epsId: formData.epsId,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        totalDays: parseInt(formData.totalDays),
+        diagnosis: formData.diagnosis,
+        diagnosisCode: formData.diagnosisCode,
+      })
+
       toast.success('Incapacidad registrada correctamente')
       router.push('/dashboard')
     } catch (error) {
-      toast.error('Error al registrar la incapacidad')
+      const message = error instanceof Error ? error.message : 'Error al registrar la incapacidad'
+      console.error('Error creating disability:', error)
+      toast.error(message)
     } finally {
       setIsLoading(false)
     }

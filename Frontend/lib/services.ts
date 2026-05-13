@@ -4,6 +4,7 @@
  */
 
 import api from './api'
+import { refreshEmitter } from '@/hooks/use-auto-refresh'
 import type {
   AuthResponse,
   LoginCredentials,
@@ -170,6 +171,10 @@ export const disabilityService = {
       soportes: [{ tipo_documento: 'CERTIFICADO' }]
     })
     const item = response.data
+    
+    // The system emits event to notify dashboard of new disability
+    refreshEmitter.emit('disabilityCreated')
+    
     return {
       id: item.id,
       employeeId: item.colaborador_id,
