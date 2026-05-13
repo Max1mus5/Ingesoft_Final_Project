@@ -45,6 +45,67 @@ async def startup_event():
             db.add(default_eps)
             await db.commit()
             print("El sistema creó EPS por defecto: SURA")
+    
+    # El sistema crea usuarios predeterminados para testing
+    await create_default_users()
+
+async def create_default_users():
+    """El sistema crea usuarios predeterminados para facilitar el testing."""
+    default_users = [
+        {
+            "documento": "ADMIN001",
+            "nombre_completo": "Administrador GH",
+            "email": "admin@gh.com",
+            "rol": "GESTION_HUMANA",
+            "hashed_password": "$5$rounds=535000$XX9stxuDbYBzKKUA$7OQoOmKHjBmmqd/.NHjUd0aiLyWzPtf7zj7B0dN8ZjD"
+        },
+        {
+            "documento": "RRHH001",
+            "nombre_completo": "RRHH Test",
+            "email": "rrhh@test.com",
+            "rol": "GESTION_HUMANA",
+            "hashed_password": "$5$rounds=535000$5OERx6hacCWby6X5$K8vjZvHeuSVXzHqyv6ryF7/I.gDI4zsxuplt9rYa0G6"
+        },
+        {
+            "documento": "CONT001",
+            "nombre_completo": "Conta",
+            "email": "c@c.com",
+            "rol": "CONTABILIDAD",
+            "hashed_password": "$5$rounds=535000$QDyQSh.VAmtgXPsO$ALcZyuqBO2ULSQ5HELv94kz02IUedMLZYxMqkGGa5s6"
+        },
+        {
+            "documento": "COLAB001",
+            "nombre_completo": "Camilo Colaborador",
+            "email": "camilo@colab.com",
+            "rol": "COLABORADOR",
+            "hashed_password": "$5$rounds=535000$SfMollrHGDblfJZP$fjCDtZpJjI7yKd2cl6wAxpH3tuSebfSZ0FBq.55N2g."
+        },
+        {
+            "documento": "123456789",
+            "nombre_completo": "Juan Perez",
+            "email": "juan.perez@empresa.com",
+            "rol": "COLABORADOR",
+            "hashed_password": "$5$rounds=535000$WlJ1ka2NoLV2qX2C$isdgP5bVfCypV3jb0dF1Qe2hegQ2/f8aP5mGTYxUI0/"
+        }
+    ]
+    
+    async with AsyncSessionLocal() as db:
+        for user_data in default_users:
+            result = await db.execute(select(Usuario).filter(Usuario.documento == user_data["documento"]))
+            user_exists = result.scalars().first()
+            
+            if not user_exists:
+                nuevo_usuario = Usuario(
+                    documento=user_data["documento"],
+                    nombre_completo=user_data["nombre_completo"],
+                    email=user_data["email"],
+                    hashed_password=user_data["hashed_password"],
+                    rol=user_data["rol"]
+                )
+                db.add(nuevo_usuario)
+                print(f"El sistema creó usuario predeterminado: {user_data['documento']}")
+        
+        await db.commit()
 
 @app.get("/")
 async def root_status():

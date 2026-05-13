@@ -28,6 +28,19 @@ export function LoginForm() {
    */
 const isFormValid = document.trim() !== '' && password.trim() !== ''
   
+    const defaultUsers = [
+      { nombre: "Admin", documento: "ADMIN001", password: "admin123", rol: "GESTION_HUMANA" },
+      { nombre: "RRHH", documento: "RRHH001", password: "rrhh123", rol: "GESTION_HUMANA" },
+      { nombre: "Contabilidad", documento: "CONT001", password: "conta123", rol: "CONTABILIDAD" },
+      { nombre: "Colaborador", documento: "COLAB001", password: "colab123", rol: "COLABORADOR" },
+      { nombre: "Juan Perez", documento: "123456789", password: "123456789", rol: "COLABORADOR" }
+    ]
+  
+    const handleSelectUser = (doc: string, pwd: string) => {
+      setDocument(doc)
+      setPassword(pwd)
+    }
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -141,6 +154,23 @@ const isFormValid = document.trim() !== '' && password.trim() !== ''
                <p><span className="text-[#00E5FF]">Admin:</span> documento "12345678" / password "admin123"</p>
                <p><span className="text-[#00E5FF]">RRHH:</span> documento "87654321" / password "rrhh123"</p>
                <p><span className="text-[#00E5FF]">Contabilidad:</span> documento "11223344" / password "conta123"</p>
+             </div>
+           </div>
+           
+           <div className="mt-6 rounded-lg border border-[#2A2A2A] bg-[#121212] p-4">
+             <p className="mb-3 text-xs font-medium text-[#9E9E9E]">Usuarios predeterminados (click para auto-llenar):</p>
+             <div className="space-y-2">
+               {defaultUsers.map((user) => (
+                 <button
+                   key={user.documento}
+                   onClick={() => handleSelectUser(user.documento, user.password)}
+                   className="block w-full rounded border border-[#2A2A2A] bg-[#1A1A1A] px-3 py-2 text-left text-xs text-[#E0E0E0] hover:border-[#00E5FF] hover:bg-[#242424] transition-colors"
+                 >
+                   <div className="font-medium text-[#00E5FF]">{user.nombre}</div>
+                   <div className="text-[#9E9E9E]">{user.documento} / {user.password}</div>
+                   <div className="text-[#9E9E9E]/70">{user.rol}</div>
+                 </button>
+               ))}
              </div>
            </div>
            
