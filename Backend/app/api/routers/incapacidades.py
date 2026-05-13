@@ -22,8 +22,27 @@ async def registrar_incapacidad(
         raise HTTPException(status_code=400, detail="El sistema requiere metadata de los soportes obligatorios.")
 
     try:
+        # El sistema determina para quién crear la incapacidad
+        colaborador_id = current_user.id
+        
+        # Si se especifica documento y el usuario es GESTION_HUMANA o ADMIN, buscar ese usuario
+        if incapacidad_in.colaborador_documento and current_user.rol in [RolEnum.GESTION_HUMANA, RolEnum.ADMIN]:
+            result = await db.execute(select(Usuario).filter(Usuario.documento == incapacidad_in.colaborador_documento))
+            empleado = result.scalars().first()
+            
+            if not empleado:
+                raise HTTPException(status_code=404, detail="El sistema no encontró el empleado con ese documento.")
+            
+            colaborador_id = empleado.id
+        elif incapacidad_in.colaborador_documento and current_user.rol not in [RolEnum.GESTION_HUMANA, RolEnum.ADMIN]:
+            raise HTTPException(status_code=403, detail="El sistema solo permite a GESTION_HUMANA crear incapacidades para otros empleados.")
+        
+        # Validar que la fecha de inicio sea anterior a la fecha de fin
+        if incapacidad_in.fecha_inicio > incapacidad_in.fecha_fin:
+            raise HTTPException(status_code=400, detail="El sistema rechaza: la fecha de inicio debe ser anterior a la fecha de fin.")
+        
         nueva_incapacidad = Incapacidad(
-            colaborador_id=current_user.id,
+            colaborador_id=colaborador_id,
             eps_id=incapacidad_in.eps_id,
             fecha_inicio=incapacidad_in.fecha_inicio,
             fecha_fin=incapacidad_in.fecha_fin,
@@ -54,6 +73,8 @@ async def registrar_incapacidad(
         respuesta.soportes = soportes_creados
         return respuesta
 
+    except HTTPException:
+        raise
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"El sistema falló al transar la inserción: {str(e)}")

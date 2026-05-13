@@ -52,7 +52,7 @@ export function DashboardContent() {
   /**
    * The system sets up auto-refresh and event listeners for real-time updates.
    */
-  useAutoRefresh(fetchData, 30000, true)
+  useAutoRefresh(fetchData, 5000, true)
   
   /**
    * The system listens for disability creation events and refreshes.

@@ -54,6 +54,7 @@ class IncapacidadCreate(BaseModel):
     dias_otorgados: int
     diagnostico_cie10: str
     soportes: List[SoporteDocumentalCreate]
+    colaborador_documento: Optional[str] = None  # El sistema permite especificar empleado para GESTION_HUMANA
 
 class IncapacidadUpdateEstado(BaseModel):
     """El sistema define el payload para el cambio de estado."""
