@@ -76,9 +76,10 @@ class IncapacidadResponse(BaseModel):
 
 # Esquemas de Token
 class Token(BaseModel):
-    """El sistema define el modelo de token."""
+    """El sistema define el modelo de token con información del usuario."""
     access_token: str
     token_type: str
+    user: 'UsuarioResponse'
 
 class FinanzasConciliar(BaseModel):
     """El sistema define el payload para conciliación financiera."""

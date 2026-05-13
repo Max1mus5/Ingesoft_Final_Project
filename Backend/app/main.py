@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.routers import alertas, auth, incapacidades
 from app.core.database import engine, Base, AsyncSessionLocal
 from app.api.routers import finanzas
-from app.models.domain import EPS
+from app.models.domain import EPS, Usuario
 from sqlalchemy.future import select
 
 # El sistema inicializa la instancia API bajo los estándares REST.
@@ -24,6 +24,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_origin_regex=r"https://.*\\.vercel\\.app",
 )
 
 app.include_router(auth.router, prefix="/api/auth", tags=["Autenticación"])

@@ -35,17 +35,16 @@ export const authService = {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     })
     
-    const { access_token, token_type } = response.data
+    const { access_token, token_type, user } = response.data
     const token = access_token
-    const payload = JSON.parse(atob(token.split('.')[1]))
     
     return {
       token,
       user: {
-        id: payload.sub,
-        role: payload.rol,
-        email: credentials.email,
-        name: '',
+        id: user.id,
+        role: user.rol,
+        email: user.email,
+        name: user.nombre_completo,
       }
     }
   },
