@@ -292,4 +292,16 @@ export const financeService = {
   },
 }
 
+export const usuariosService = {
+  getAll: async (): Promise<any[]> => {
+    try {
+      const response = await api.get('/usuarios')
+      return response.data || []
+    } catch (error) {
+      console.error('Error fetching usuarios:', error)
+      throw error
+    }
+  },
+}
+
 export { api }

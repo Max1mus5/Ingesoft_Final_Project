@@ -16,19 +16,25 @@ async def conciliar_pago(
 ):
     """El sistema procesa el pago recibido y actualiza la incapacidad a PAGADA."""
     if current_user.rol not in [RolEnum.ADMIN, RolEnum.CONTABILIDAD]:
-        raise HTTPException(status_code=403, detail="El sistema requiere rol contable.")
+        raise HTTPException(
+            status_code=403,
+            detail=f"Solo administradores y personal de contabilidad pueden conciliar pagos. Tu rol actual es '{current_user.rol.value}'."
+        )
         
     try:
         result = await db.execute(select(Incapacidad).filter(Incapacidad.id == conciliacion.incapacidad_id))
         incapacidad = result.scalars().first()
         
         if not incapacidad:
-            raise HTTPException(status_code=404, detail="El sistema no encontró la incapacidad.")
+            raise HTTPException(
+                status_code=404,
+                detail=f"La incapacidad con ID '{conciliacion.incapacidad_id}' no existe en el sistema."
+            )
 
         if incapacidad.estado not in [EstadoIncapacidadEnum.RADICADA, EstadoIncapacidadEnum.EN_MORA]:
             raise HTTPException(
                 status_code=400,
-                detail="El sistema solo permite conciliar incapacidades RADICADA o EN_MORA."
+                detail=f"No se puede conciliar una incapacidad en estado '{incapacidad.estado.value}'. Solo se pueden conciliar incapacidades en estado RADICADA o EN_MORA."
             )
             
         incapacidad.estado = EstadoIncapacidadEnum.PAGADA
@@ -41,9 +47,14 @@ async def conciliar_pago(
         await db.refresh(incapacidad)
         
         return {
-            "mensaje": "El sistema ha conciliado el pago exitosamente.",
+            "mensaje": f"El sistema ha conciliado el pago exitosamente. Valor pagado: ${conciliacion.valor_pagado:,.0f}",
             "incapacidad": IncapacidadResponse.model_validate(incapacidad)
         }
+    except HTTPException:
+        raise
     except Exception as e:
         await db.rollback()
-        raise HTTPException(status_code=500, detail=f"El sistema falló al conciliar: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al procesar conciliación: {str(e)}"
+        )

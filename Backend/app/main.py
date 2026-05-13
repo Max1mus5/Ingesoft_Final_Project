@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
-from app.api.routers import alertas, auth, incapacidades
+from app.api.routers import alertas, auth, incapacidades, usuarios
 from app.core.database import engine, Base, AsyncSessionLocal
 from app.api.routers import finanzas
 from app.models.domain import EPS, Usuario
@@ -40,6 +40,7 @@ app.include_router(auth.router, prefix="/api/auth", tags=["Autenticación"])
 app.include_router(incapacidades.router, prefix="/api/incapacidades", tags=["Incapacidades (Procesos Core)"])
 app.include_router(alertas.router, prefix="/api/alertas", tags=["Alertas y Tiempos"])
 app.include_router(finanzas.router, prefix="/api/finanzas", tags=["Finanzas"])
+app.include_router(usuarios.router, prefix="/api/usuarios", tags=["Usuarios"])
 
 @app.on_event("startup")
 async def startup_event():

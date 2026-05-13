@@ -40,7 +40,7 @@ api.interceptors.request.use(
  */
 api.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
+  (error: AxiosError<any>) => {
     if (error.response?.status === 401) {
       // The system clears authentication on unauthorized response
       if (typeof window !== 'undefined') {
@@ -49,7 +49,11 @@ api.interceptors.response.use(
         window.location.href = '/login'
       }
     }
-    return Promise.reject(error)
+    
+    // The system extracts the error detail from backend response
+    const errorDetail = error.response?.data?.detail || error.message || 'Error desconocido'
+    const errorWithMessage = new Error(errorDetail)
+    return Promise.reject(errorWithMessage)
   }
 )
 

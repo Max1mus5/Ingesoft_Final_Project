@@ -47,6 +47,19 @@ def _puede_ver_cie10(rol: RolEnum) -> bool:
     """El sistema define los roles que pueden visualizar diagnóstico CIE10 sin ofuscación."""
     return rol in [RolEnum.ADMIN, RolEnum.GESTION_HUMANA]
 
+
+def _format_soporte_response(soporte: SoporteDocumental) -> dict:
+    """El sistema formatea la respuesta de soporte con URL absoluta."""
+    url_archivo = soporte.url_archivo
+    # Si la URL comienza con /, es una ruta relativa y necesita el URL base
+    if url_archivo and url_archivo.startswith('/'):
+        url_archivo = f"{settings.api_base_url}{url_archivo}"
+    return {
+        "id": str(soporte.id),
+        "tipo_documento": soporte.tipo_documento.value,
+        "url_archivo": url_archivo
+    }
+
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=dict)
 async def registrar_incapacidad(
     incapacidad_in: IncapacidadCreate, 
@@ -67,15 +80,24 @@ async def registrar_incapacidad(
             empleado = result.scalars().first()
             
             if not empleado:
-                raise HTTPException(status_code=404, detail="El sistema no encontró el empleado con ese documento.")
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"El sistema no encontró usuario con documento '{incapacidad_in.colaborador_documento}'. Verifica el documento ingresado."
+                )
             
             colaborador_id = empleado.id
         elif incapacidad_in.colaborador_documento and current_user.rol not in [RolEnum.GESTION_HUMANA, RolEnum.ADMIN]:
-            raise HTTPException(status_code=403, detail="El sistema solo permite a GESTION_HUMANA crear incapacidades para otros empleados.")
+            raise HTTPException(
+                status_code=403,
+                detail=f"Solo administradores y personal de gestión humana pueden crear incapacidades para otros. Tu rol actual es '{current_user.rol.value}'."
+            )
         
         # Validar que la fecha de inicio sea anterior a la fecha de fin
         if incapacidad_in.fecha_inicio > incapacidad_in.fecha_fin:
-            raise HTTPException(status_code=400, detail="El sistema rechaza: la fecha de inicio debe ser anterior a la fecha de fin.")
+            raise HTTPException(
+                status_code=400,
+                detail=f"Fechas inválidas: la fecha de inicio ({incapacidad_in.fecha_inicio}) debe ser anterior a la fecha de fin ({incapacidad_in.fecha_fin})."
+            )
         
         nueva_incapacidad = Incapacidad(
             colaborador_id=colaborador_id,
@@ -156,7 +178,7 @@ async def registrar_incapacidad(
             "estado": nueva_incapacidad.estado.value,
             "fecha_registro": nueva_incapacidad.fecha_registro.isoformat(),
             "diagnostico_cie10": nueva_incapacidad.diagnostico_cie10 if _puede_ver_cie10(current_user.rol) else None,
-            "soportes": [{"id": str(s.id), "tipo_documento": s.tipo_documento.value, "url_archivo": s.url_archivo} for s in soportes_creados],
+            "soportes": [_format_soporte_response(s) for s in soportes_creados],
         }
         return resp_dict
 
@@ -195,7 +217,7 @@ async def listar_incapacidades(
             "estado": record.estado.value,
             "fecha_registro": record.fecha_registro.isoformat(),
             "diagnostico_cie10": record.diagnostico_cie10 if _puede_ver_cie10(current_user.rol) else None,
-            "soportes": [{"id": str(s.id), "tipo_documento": s.tipo_documento.value, "url_archivo": s.url_archivo} for s in record.soportes] if record.soportes else [],
+            "soportes": [_format_soporte_response(s) for s in record.soportes] if record.soportes else [],
         }
         resultados.append(resp_dict)
         
@@ -234,7 +256,7 @@ async def obtener_incapacidad(
             "estado": incapacidad.estado.value,
             "fecha_registro": incapacidad.fecha_registro.isoformat(),
             "diagnostico_cie10": incapacidad.diagnostico_cie10 if _puede_ver_cie10(current_user.rol) else None,
-            "soportes": [{"id": str(s.id), "tipo_documento": s.tipo_documento.value, "url_archivo": s.url_archivo} for s in incapacidad.soportes] if incapacidad.soportes else [],
+            "soportes": [_format_soporte_response(s) for s in incapacidad.soportes] if incapacidad.soportes else [],
         }
         return resp_dict
     except HTTPException:
@@ -291,7 +313,7 @@ async def actualizar_estado(
             "estado": incapacidad.estado.value,
             "fecha_registro": incapacidad.fecha_registro.isoformat(),
             "diagnostico_cie10": incapacidad.diagnostico_cie10 if _puede_ver_cie10(current_user.rol) else None,
-            "soportes": [{"id": str(s.id), "tipo_documento": s.tipo_documento.value, "url_archivo": s.url_archivo} for s in incapacidad.soportes] if incapacidad.soportes else [],
+            "soportes": [_format_soporte_response(s) for s in incapacidad.soportes] if incapacidad.soportes else [],
         }
         return resp_dict
     except HTTPException:

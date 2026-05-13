@@ -109,10 +109,22 @@ export function DashboardHeader({ alertCount = 0 }: DashboardHeaderProps) {
                 Mi cuenta
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-[#2A2A2A]" />
-<DropdownMenuItem className="text-[#E0E0E0] focus:bg-[#2A2A2A] focus:text-[#E0E0E0]" onClick={() => router.push('/profile')}>
-                 <User className="mr-2 h-4 w-4" />
-                 Perfil
-               </DropdownMenuItem>
+              <DropdownMenuItem className="text-[#E0E0E0] focus:bg-[#2A2A2A] focus:text-[#E0E0E0]" onClick={() => router.push('/profile')}>
+                <User className="mr-2 h-4 w-4" />
+                Perfil
+              </DropdownMenuItem>
+              {user?.role === 'ADMIN' && (
+                <>
+                  <DropdownMenuSeparator className="bg-[#2A2A2A]" />
+                  <DropdownMenuLabel className="text-[#00E5FF] text-xs">
+                    Administración
+                  </DropdownMenuLabel>
+                  <DropdownMenuItem className="text-[#00E5FF] focus:bg-[#2A2A2A] focus:text-[#00E5FF]" onClick={() => router.push('/admin/usuarios')}>
+                    <User className="mr-2 h-4 w-4" />
+                    Gestionar Colaboradores
+                  </DropdownMenuItem>
+                </>
+              )}
               <DropdownMenuSeparator className="bg-[#2A2A2A]" />
               <DropdownMenuItem
                 className="text-[#FF5252] focus:bg-[#2A2A2A] focus:text-[#FF5252]"
