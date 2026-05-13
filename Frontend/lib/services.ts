@@ -160,16 +160,19 @@ export const disabilityService = {
     totalDays: number
     diagnosis: string
     diagnosisCode: string
+    soportes?: any[]
   }): Promise<Disability> => {
-    const response = await api.post('/incapacidades', {
+    const payload: any = {
       colaborador_documento: data.employeeDocument,
       eps_id: parseInt(data.epsId),
       fecha_inicio: data.startDate,
       fecha_fin: data.endDate,
       dias_otorgados: data.totalDays,
       diagnostico_cie10: data.diagnosisCode,
-      soportes: [{ tipo_documento: 'CERTIFICADO' }]
-    })
+      soportes: data.soportes ?? [{ tipo_documento: 'CERTIFICADO' }]
+    }
+
+    const response = await api.post('/incapacidades', payload)
     const item = response.data
     
     // The system emits event to notify dashboard of new disability

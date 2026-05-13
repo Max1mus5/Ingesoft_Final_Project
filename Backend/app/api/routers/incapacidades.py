@@ -1,4 +1,7 @@
 import uuid
+import base64
+import os
+import mimetypes
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -55,7 +58,31 @@ async def registrar_incapacidad(
 
         soportes_creados = []
         for soporte_in in incapacidad_in.soportes:
-            url_ficticia = f"https://s3.ficticio.com/soportes/{uuid.uuid4()}.pdf"
+            url_ficticia = None
+
+            # Si viene archivo en base64 tipo data URL, decodificar y guardar en /uploads
+            archivo_b64 = getattr(soporte_in, 'archivo_base64_o_url', None)
+            if archivo_b64 and isinstance(archivo_b64, str) and archivo_b64.startswith('data:'):
+                try:
+                    header, data = archivo_b64.split(',', 1)
+                    mime = header.split(';')[0].split(':')[1] if ':' in header else 'application/octet-stream'
+                    ext = mimetypes.guess_extension(mime) or '.bin'
+                    filename = f"{uuid.uuid4()}{ext}"
+                    uploads_dir = os.path.join(os.getcwd(), 'uploads')
+                    if not os.path.exists(uploads_dir):
+                        os.makedirs(uploads_dir, exist_ok=True)
+                    file_path = os.path.join(uploads_dir, filename)
+                    with open(file_path, 'wb') as f:
+                        f.write(base64.b64decode(data))
+                    url_ficticia = f"/uploads/{filename}"
+                except Exception:
+                    url_ficticia = f"https://s3.ficticio.com/soportes/{uuid.uuid4()}.pdf"
+            elif archivo_b64 and isinstance(archivo_b64, str):
+                # Si es una URL ya provisionada, úsala directamente
+                url_ficticia = archivo_b64
+            else:
+                url_ficticia = f"https://s3.ficticio.com/soportes/{uuid.uuid4()}.pdf"
+
             nuevo_soporte = SoporteDocumental(
                 incapacidad_id=nueva_incapacidad.id,
                 tipo_documento=soporte_in.tipo_documento,

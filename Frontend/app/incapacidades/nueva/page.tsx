@@ -38,6 +38,7 @@ function NewDisabilityContent() {
     totalDays: '',
     diagnosis: '',
     diagnosisCode: '',
+    soporteBase64: '',
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,6 +54,14 @@ function NewDisabilityContent() {
         return
       }
 
+      // Build soportes array including base64 if provided
+      const soportes = []
+      if (formData.soporteBase64) {
+        soportes.push({ tipo_documento: 'CERTIFICADO', archivo_base64_o_url: formData.soporteBase64 })
+      } else {
+        soportes.push({ tipo_documento: 'CERTIFICADO' })
+      }
+
       // Call the actual disability service
       await disabilityService.create({
         employeeDocument: formData.employeeDocument,
@@ -63,6 +72,7 @@ function NewDisabilityContent() {
         totalDays: parseInt(formData.totalDays),
         diagnosis: formData.diagnosis,
         diagnosisCode: formData.diagnosisCode,
+        soportes,
       })
 
       toast.success('Incapacidad registrada correctamente')
@@ -223,6 +233,26 @@ function NewDisabilityContent() {
                     required
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="soporte" className="text-[#E0E0E0]">Soporte (PDF / Word)</Label>
+                <input
+                  id="soporte"
+                  type="file"
+                  accept=".pdf,application/pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  disabled={isLoading}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    const reader = new FileReader()
+                    reader.onload = () => {
+                      const result = reader.result as string
+                      setFormData({ ...formData, soporteBase64: result })
+                    }
+                    reader.readAsDataURL(file)
+                  }}
+                />
               </div>
               
               <Button
