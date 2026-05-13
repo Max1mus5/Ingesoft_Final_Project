@@ -113,7 +113,7 @@ export const disabilityService = {
       startDate: item.fecha_inicio,
       endDate: item.fecha_fin,
       diagnosis: '',
-      diagnosisCode: item.diagnostico_cie10,
+      diagnosisCode: item.diagnostico_cie10 || '',
       eps: '',
       totalDays: item.dias_otorgados,
       status: item.estado,
@@ -121,6 +121,11 @@ export const disabilityService = {
       updatedAt: '',
       expirationDate: '',
       daysUntilExpiration: 0,
+      soportes: item.soportes?.map((s: any) => ({
+        id: s.id,
+        tipoDocumento: s.tipo_documento,
+        urlArchivo: s.url_archivo
+      })) || []
     }
   },
   

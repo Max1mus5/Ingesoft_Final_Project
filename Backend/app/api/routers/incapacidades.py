@@ -129,6 +129,35 @@ async def listar_incapacidades(
         
     return resultados
 
+@router.get("/{id}", response_model=IncapacidadResponse)
+async def obtener_incapacidad(
+    id: uuid.UUID,
+    current_user: Usuario = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """El sistema retorna los detalles de una incapacidad específica con sus soportes."""
+    try:
+        stmt = select(Incapacidad).where(Incapacidad.id == id).options(selectinload(Incapacidad.soportes))
+        result = await db.execute(stmt)
+        incapacidad = result.scalars().first()
+        
+        if not incapacidad:
+            raise HTTPException(status_code=404, detail="El sistema no encontró la incapacidad buscada.")
+        
+        # Control de acceso: solo ADMIN/GESTION_HUMANA pueden ver cualquier incapacidad, otros ven solo las propias
+        if current_user.rol not in [RolEnum.ADMIN, RolEnum.GESTION_HUMANA]:
+            if incapacidad.colaborador_id != current_user.id:
+                raise HTTPException(status_code=403, detail="El sistema deniega el acceso a esta incapacidad.")
+        
+        resp = IncapacidadResponse.model_validate(incapacidad)
+        if current_user.rol not in [RolEnum.ADMIN, RolEnum.GESTION_HUMANA]:
+            resp.diagnostico_cie10 = None
+        return resp
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"El sistema error: {str(e)}")
+
 @router.patch("/{id}/estado", response_model=IncapacidadResponse)
 async def actualizar_estado(
     id: uuid.UUID,

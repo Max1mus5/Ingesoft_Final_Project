@@ -7,14 +7,14 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Loader2, ArrowLeft, Calendar, FileText, Stethoscope, User, Building, Hash } from 'lucide-react'
+import { Loader2, ArrowLeft, Calendar, FileText, Stethoscope, User, Building, Hash, Download, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatusBadge } from '@/components/status-badge'
 import { ProtectedRoute } from '@/components/protected-route'
 import { ConciliationDrawer } from '@/components/conciliation-drawer'
 import { disabilityService } from '@/lib/services'
-import type { Disability } from '@/lib/types'
+import type { Disability, SoporteDocumental } from '@/lib/types'
 
 export default function DisabilityDetailPage() {
   return (
@@ -164,6 +164,53 @@ function DisabilityDetailContent() {
                     </div>
                   </div>
                 </div>
+
+                {/* Documentos/Soportes */}
+                {disability.soportes && disability.soportes.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-[#9E9E9E]">Documentos adjuntos</h3>
+                    <div className="space-y-3">
+                      {disability.soportes.map((soporte: SoporteDocumental) => (
+                        <div key={soporte.id} className="flex items-center justify-between rounded-lg bg-[#2A2A2A] p-3">
+                          <div className="flex items-center gap-3">
+                            <FileText className="h-5 w-5 text-[#00E5FF]" />
+                            <div>
+                              <p className="text-sm text-[#E0E0E0]">{soporte.tipoDocumento}</p>
+                              <p className="text-xs text-[#9E9E9E]">{soporte.urlArchivo.split('/').pop() || 'Documento'}</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            {soporte.urlArchivo && (soporte.urlArchivo.endsWith('.pdf') || soporte.urlArchivo.includes('pdf')) && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-[#00E5FF] hover:bg-[#1A1A1A]"
+                                onClick={() => window.open(soporte.urlArchivo, '_blank')}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-[#00E5FF] hover:bg-[#1A1A1A]"
+                              onClick={() => {
+                                const link = document.createElement('a')
+                                link.href = soporte.urlArchivo
+                                link.download = soporte.urlArchivo.split('/').pop() || 'documento'
+                                document.body.appendChild(link)
+                                link.click()
+                                document.body.removeChild(link)
+                              }}
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 
                 {/* Dates */}
                 <div className="space-y-4">

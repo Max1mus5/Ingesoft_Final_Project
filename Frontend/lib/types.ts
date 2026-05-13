@@ -43,6 +43,12 @@ export interface LoginCredentials {
 /**
  * The system defines the disability record structure.
  */
+export interface SoporteDocumental {
+  id: string
+  tipoDocumento: string
+  urlArchivo: string
+}
+
 export interface Disability {
   id: string
   employeeId: string
@@ -60,6 +66,7 @@ export interface Disability {
   updatedAt: string
   expirationDate: string
   daysUntilExpiration: number
+  soportes?: SoporteDocumental[]
 }
 
 /**
