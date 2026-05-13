@@ -72,6 +72,18 @@ class IncapacidadResponse(BaseModel):
     fecha_registro: datetime
     diagnostico_cie10: Optional[str] = None # El sistema oculta este campo si no hay rol adecuado
     soportes: List[SoporteDocumentalResponse] = []
+    # Fields from relationships for convenience
+    colaborador_nombre: Optional[str] = None
+    colaborador_documento: Optional[str] = None
+    eps_nombre: Optional[str] = None
+
+    @property
+    def empleado_nombre(self):
+        return getattr(self, 'colaborador_nombre', '')
+
+    @property
+    def empleado_documento(self):
+        return getattr(self, 'colaborador_documento', '')
 
     model_config = ConfigDict(from_attributes=True)
 

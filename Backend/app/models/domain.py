@@ -60,6 +60,7 @@ class Incapacidad(Base):
     # El sistema establece las relaciones referenciales ORM.
     colaborador = relationship("Usuario")
     eps = relationship("EPS")
+    soportes = relationship("SoporteDocumental", back_populates="incapacidad")
 
 class TipoSoporteEnum(str, enum.Enum):
     """El sistema categoriza los tipos de archivos clínicos soportados."""
@@ -77,4 +78,4 @@ class SoporteDocumental(Base):
     tipo_documento = Column(Enum(TipoSoporteEnum), nullable=False)
     url_archivo = Column(String, nullable=False)
 
-    incapacidad = relationship("Incapacidad")
+    incapacidad = relationship("Incapacidad", back_populates="soportes")

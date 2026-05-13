@@ -86,19 +86,24 @@ export const disabilityService = {
     return response.data.map((item: any) => ({
       id: item.id,
       employeeId: item.colaborador_id,
-      employeeName: '',
-      employeeDocument: '',
+      employeeName: item.colaborador_nombre,
+      employeeDocument: item.colaborador_documento,
       startDate: item.fecha_inicio,
       endDate: item.fecha_fin,
       diagnosis: '',
-      diagnosisCode: item.diagnostico_cie10,
-      eps: '',
+      diagnosisCode: item.diagnostico_cie10 || '',
+      eps: item.eps_nombre,
       totalDays: item.dias_otorgados,
       status: item.estado,
       createdAt: item.fecha_registro,
       updatedAt: '',
       expirationDate: '',
       daysUntilExpiration: 0,
+      soportes: item.soportes?.map((s: any) => ({
+        id: s.id,
+        tipoDocumento: s.tipo_documento,
+        urlArchivo: s.url_archivo
+      })) || []
     }))
   },
   
@@ -108,13 +113,13 @@ export const disabilityService = {
     return {
       id: item.id,
       employeeId: item.colaborador_id,
-      employeeName: '',
-      employeeDocument: '',
+      employeeName: item.colaborador_nombre,
+      employeeDocument: item.colaborador_documento,
       startDate: item.fecha_inicio,
       endDate: item.fecha_fin,
       diagnosis: '',
       diagnosisCode: item.diagnostico_cie10 || '',
-      eps: '',
+      eps: item.eps_nombre,
       totalDays: item.dias_otorgados,
       status: item.estado,
       createdAt: item.fecha_registro,

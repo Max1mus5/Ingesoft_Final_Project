@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 import { Loader2, ArrowLeft, Calendar, FileText, Stethoscope, User, Building, Hash, Download, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -26,8 +26,8 @@ export default function DisabilityDetailPage() {
 
 function DisabilityDetailContent() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const disabilityId = searchParams.get('id')
+  const params = useParams()
+  const disabilityId = params?.id as string
   
   const [disability, setDisability] = useState<Disability | null>(null)
   const [isLoading, setIsLoading] = useState(true)

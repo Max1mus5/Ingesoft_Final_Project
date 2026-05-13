@@ -42,6 +42,21 @@ const statusConfig: Record<DisabilityStatus, { label: string; className: string 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
   const config = statusConfig[status]
   
+  // Fallback if status is invalid/undefined
+  if (!config) {
+    return (
+      <span
+        className={cn(
+          'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium',
+          'bg-[#9E9E9E]/10 text-[#9E9E9E] border-[#9E9E9E]/30',
+          className
+        )}
+      >
+        Desconocido
+      </span>
+    )
+  }
+  
   return (
     <span
       className={cn(
