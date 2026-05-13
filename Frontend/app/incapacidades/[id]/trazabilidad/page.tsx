@@ -6,17 +6,14 @@
  */
 
 import { useEffect, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { Loader2, ArrowLeft, Clock } from 'lucide-react'
+import { useRouter, useParams } from 'next/navigation'
+import { Loader2, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ProtectedRoute } from '@/components/protected-route'
+import { TraceabilityTimeline } from '@/components/traceability-timeline'
 import { disabilityService } from '@/lib/services'
-
-interface TraceEvent {
-  evento: string
-  fecha: string
-}
+import type { TraceabilityResponse } from '@/lib/types'
 
 export default function TraceabilityPage() {
   return (
@@ -28,10 +25,10 @@ export default function TraceabilityPage() {
 
 function TraceabilityContent() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const disabilityId = searchParams.get('id')
+  const params = useParams()
+  const disabilityId = params?.id as string
   
-  const [logs, setLogs] = useState<TraceEvent[]>([])
+  const [traceability, setTraceability] = useState<TraceabilityResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -44,7 +41,7 @@ function TraceabilityContent() {
     try {
       // The system would fetch from GET /api/incapacidades/{id}/trazabilidad in production
       const data = await disabilityService.getTraceability(disabilityId!)
-      setLogs(data.logs || [])
+      setTraceability(data)
     } catch (error) {
       console.error('Error fetching traceability:', error)
     } finally {
@@ -84,21 +81,7 @@ function TraceabilityContent() {
           </CardHeader>
           
           <CardContent>
-            <div className="space-y-4">
-              {logs.length === 0 ? (
-                <p className="text-center text-[#9E9E9E]">No hay eventos registrados</p>
-              ) : (
-                logs.map((log, index) => (
-                  <div key={index} className="flex items-start gap-3 border-l-2 border-[#00E5FF] pl-4">
-                    <Clock className="mt-0.5 h-4 w-4 text-[#00E5FF]" />
-                    <div>
-                      <p className="font-medium text-[#E0E0E0]">{log.evento}</p>
-                      <p className="text-xs text-[#9E9E9E]">{log.fecha}</p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+              <TraceabilityTimeline data={traceability} isLoading={isLoading} />
           </CardContent>
         </Card>
       </div>

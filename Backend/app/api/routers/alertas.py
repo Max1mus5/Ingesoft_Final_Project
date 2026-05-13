@@ -3,9 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.core.database import get_db
 from app.models.domain import Incapacidad, Usuario, RolEnum, EstadoIncapacidadEnum, EPS
-from app.schemas.domain import IncapacidadResponse
 from app.api.dependencies import get_current_user
-from datetime import datetime, date
+from datetime import date
 
 router = APIRouter()
 
@@ -19,23 +18,38 @@ async def obtener_alertas_vencimiento(
         raise HTTPException(status_code=403, detail="El sistema deniega esta operación.")
     
     # Trae todas las radicadas
-    stmt = select(Incapacidad, EPS).join(EPS, Incapacidad.eps_id == EPS.id).filter(Incapacidad.estado == EstadoIncapacidadEnum.RADICADA)
+    stmt = (
+        select(Incapacidad, EPS, Usuario)
+        .join(EPS, Incapacidad.eps_id == EPS.id)
+        .join(Usuario, Incapacidad.colaborador_id == Usuario.id)
+        .filter(Incapacidad.estado == EstadoIncapacidadEnum.RADICADA)
+    )
     result = await db.execute(stmt)
     records = result.all()
     
     alertas = []
     hoy = date.today()
-    for inc, eps in records:
+    for inc, eps, colaborador in records:
         # Aquí se asume lógica simplificada basada en limite_radicacion: el sistema calcula tiempo
         dias_pasados = (hoy - inc.fecha_inicio).days
         dias_restantes = eps.dias_limite_radicacion - dias_pasados
         
         if dias_restantes <= 30:
-            resp = IncapacidadResponse.model_validate(inc)
+            if dias_restantes <= 0:
+                nivel = "EXPIRED"
+            elif dias_restantes <= 7:
+                nivel = "CRITICAL"
+            else:
+                nivel = "WARNING"
+
             alertas.append({
-                "incapacidad": resp,
-                "dias_restantes_limite": dias_restantes,
-                "eps": eps.nombre
+                "id": f"ALERT-{inc.id}",
+                "disabilityId": str(inc.id),
+                "employeeName": colaborador.nombre_completo,
+                "daysUntilExpiration": dias_restantes,
+                "expirationDate": str(inc.fecha_fin),
+                "status": inc.estado.value,
+                "alertLevel": nivel,
             })
             
     return alertas

@@ -50,7 +50,6 @@ const ALL_STATUSES: DisabilityStatus[] = [
   'TRANSCRITA',
   'RADICADA',
   'EN_MORA',
-  'APROBADA',
   'PAGADA',
   'RECHAZADA',
   'GLOSADA',
@@ -281,7 +280,7 @@ export function DisabilityTable({
                           )}
                           
                           {/* The system shows conciliation option only for authorized roles */}
-                          {canConciliate && disability.status === 'APROBADA' && (
+                          {canConciliate && (disability.status === 'RADICADA' || disability.status === 'EN_MORA') && (
                             <>
                               <DropdownMenuSeparator className="bg-[#2A2A2A]" />
                               <DropdownMenuItem

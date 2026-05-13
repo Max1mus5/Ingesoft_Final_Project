@@ -40,6 +40,7 @@ class EstadoIncapacidadEnum(str, enum.Enum):
     RADICADA = "RADICADA"
     EN_MORA = "EN_MORA"
     PAGADA = "PAGADA"
+    RECHAZADA = "RECHAZADA"
     GLOSADA = "GLOSADA"
     ARCHIVADA = "ARCHIVADA"
 
@@ -61,6 +62,7 @@ class Incapacidad(Base):
     colaborador = relationship("Usuario")
     eps = relationship("EPS")
     soportes = relationship("SoporteDocumental", back_populates="incapacidad")
+    historial_estados = relationship("HistorialEstadoIncapacidad", back_populates="incapacidad", cascade="all, delete-orphan")
 
 class TipoSoporteEnum(str, enum.Enum):
     """El sistema categoriza los tipos de archivos clínicos soportados."""
@@ -79,3 +81,15 @@ class SoporteDocumental(Base):
     url_archivo = Column(String, nullable=False)
 
     incapacidad = relationship("Incapacidad", back_populates="soportes")
+
+
+class HistorialEstadoIncapacidad(Base):
+    """El sistema almacena la trazabilidad de cambios de estado de cada incapacidad."""
+    __tablename__ = "historial_estados_incapacidad"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    incapacidad_id = Column(UUID(as_uuid=True), ForeignKey("incapacidades.id"), nullable=False, index=True)
+    estado = Column(Enum(EstadoIncapacidadEnum), nullable=False)
+    fecha_cambio = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    incapacidad = relationship("Incapacidad", back_populates="historial_estados")

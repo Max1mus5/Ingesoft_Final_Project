@@ -5,8 +5,8 @@
  * This component orchestrates the disability table and alerts panel.
  */
 
-import { useEffect, useState, useCallback } from 'react'
-import { RefreshCw, Plus, FileBarChart } from 'lucide-react'
+import { useState, useCallback } from 'react'
+import { RefreshCw, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { DashboardHeader } from './dashboard-header'
@@ -19,8 +19,8 @@ import { useAutoRefresh, useRefreshEvent } from '@/hooks/use-auto-refresh'
 import type { Disability, ExpirationAlert, DisabilityStatus } from '@/lib/types'
 
 export function DashboardContent() {
-   const { user } = useAuthStore()
-   const router = useRouter()
+  const { user } = useAuthStore()
+  const router = useRouter()
   const [disabilities, setDisabilities] = useState<Disability[]>([])
   const [alerts, setAlerts] = useState<ExpirationAlert[]>([])
   const [isLoadingDisabilities, setIsLoadingDisabilities] = useState(true)
@@ -31,23 +31,33 @@ export function DashboardContent() {
    * The system fetches disabilities and alerts from the API.
    */
   const fetchData = useCallback(async () => {
+    // El sistema carga incapacidades como fuente principal del dashboard.
     try {
-      // The system fetches disabilities via GET /api/incapacidades/
       const disabilitiesData = await disabilityService.getAll()
       setDisabilities(disabilitiesData)
-      setIsLoadingDisabilities(false)
-      
-      // The system fetches alerts via GET /api/alertas/vencimientos
-      const alertsData = await alertService.getExpirationAlerts()
-      setAlerts(alertsData)
-      setIsLoadingAlerts(false)
     } catch (error) {
-      console.error('Error fetching dashboard data:', error)
-      toast.error('Error al cargar los datos')
+      console.error('Error fetching disabilities:', error)
+      toast.error('Error al cargar incapacidades')
+    } finally {
       setIsLoadingDisabilities(false)
+    }
+
+    // El sistema consulta alertas solo para perfiles definidos en documentación.
+    if (user?.role === 'ADMIN' || user?.role === 'GESTION_HUMANA') {
+      try {
+        const alertsData = await alertService.getExpirationAlerts()
+        setAlerts(alertsData)
+      } catch (error) {
+        console.error('Error fetching alerts:', error)
+        toast.error('Error al cargar alertas de vencimiento')
+      } finally {
+        setIsLoadingAlerts(false)
+      }
+    } else {
+      setAlerts([])
       setIsLoadingAlerts(false)
     }
-  }, [])
+  }, [user?.role])
   
   /**
    * The system sets up auto-refresh and event listeners for real-time updates.

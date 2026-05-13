@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.core.database import get_db
-from app.models.domain import Incapacidad, Usuario, RolEnum, EstadoIncapacidadEnum
+from app.models.domain import Incapacidad, Usuario, RolEnum, EstadoIncapacidadEnum, HistorialEstadoIncapacidad
 from app.schemas.domain import FinanzasConciliar, IncapacidadResponse
 from app.api.dependencies import get_current_user
 
@@ -24,8 +24,18 @@ async def conciliar_pago(
         
         if not incapacidad:
             raise HTTPException(status_code=404, detail="El sistema no encontró la incapacidad.")
+
+        if incapacidad.estado not in [EstadoIncapacidadEnum.RADICADA, EstadoIncapacidadEnum.EN_MORA]:
+            raise HTTPException(
+                status_code=400,
+                detail="El sistema solo permite conciliar incapacidades RADICADA o EN_MORA."
+            )
             
         incapacidad.estado = EstadoIncapacidadEnum.PAGADA
+        db.add(HistorialEstadoIncapacidad(
+            incapacidad_id=incapacidad.id,
+            estado=EstadoIncapacidadEnum.PAGADA,
+        ))
         # El sistema guarda valor_pagado en registro contable (simulado)
         await db.commit()
         await db.refresh(incapacidad)

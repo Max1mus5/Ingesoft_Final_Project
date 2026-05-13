@@ -16,7 +16,6 @@ export type DisabilityStatus =
   | 'TRANSCRITA'
   | 'RADICADA'
   | 'EN_MORA'
-  | 'APROBADA'
   | 'PAGADA'
   | 'RECHAZADA'
   | 'GLOSADA'
@@ -89,6 +88,23 @@ export interface ExpirationAlert {
   expirationDate: string
   status: DisabilityStatus
   alertLevel: 'WARNING' | 'CRITICAL' | 'EXPIRED'
+}
+
+export interface TraceabilityEntry {
+  estado: DisabilityStatus
+  fechaCambio: string | null
+  alcanzado: boolean
+  esActual: boolean
+}
+
+export interface TraceabilityResponse {
+  incapacidadId: string
+  estadoActual: DisabilityStatus
+  timeline: TraceabilityEntry[]
+  logs: Array<{
+    estado: DisabilityStatus
+    fechaCambio: string
+  }>
 }
 
 /**

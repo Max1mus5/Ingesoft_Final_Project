@@ -8,12 +8,44 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.core.database import get_db
 from app.core.config import settings
-from app.models.domain import Incapacidad, Usuario, RolEnum, SoporteDocumental, EstadoIncapacidadEnum, EPS
+from app.models.domain import Incapacidad, Usuario, RolEnum, SoporteDocumental, EstadoIncapacidadEnum, EPS, HistorialEstadoIncapacidad
 from app.schemas.domain import IncapacidadCreate, IncapacidadResponse, IncapacidadUpdateEstado
 from app.api.dependencies import get_current_user
 from sqlalchemy.orm import selectinload
 
 router = APIRouter()
+
+ESTADOS_ORDEN = [
+    EstadoIncapacidadEnum.REGISTRADA,
+    EstadoIncapacidadEnum.TRANSCRITA,
+    EstadoIncapacidadEnum.RADICADA,
+    EstadoIncapacidadEnum.EN_MORA,
+    EstadoIncapacidadEnum.PAGADA,
+    EstadoIncapacidadEnum.RECHAZADA,
+    EstadoIncapacidadEnum.GLOSADA,
+    EstadoIncapacidadEnum.ARCHIVADA,
+]
+
+TRANSICIONES_VALIDAS = {
+    EstadoIncapacidadEnum.REGISTRADA: {EstadoIncapacidadEnum.TRANSCRITA},
+    EstadoIncapacidadEnum.TRANSCRITA: {EstadoIncapacidadEnum.RADICADA},
+    EstadoIncapacidadEnum.RADICADA: {EstadoIncapacidadEnum.EN_MORA, EstadoIncapacidadEnum.PAGADA, EstadoIncapacidadEnum.RECHAZADA, EstadoIncapacidadEnum.GLOSADA},
+    EstadoIncapacidadEnum.EN_MORA: {EstadoIncapacidadEnum.PAGADA, EstadoIncapacidadEnum.RECHAZADA, EstadoIncapacidadEnum.GLOSADA},
+    EstadoIncapacidadEnum.RECHAZADA: {EstadoIncapacidadEnum.ARCHIVADA},
+    EstadoIncapacidadEnum.GLOSADA: {EstadoIncapacidadEnum.ARCHIVADA},
+    EstadoIncapacidadEnum.PAGADA: {EstadoIncapacidadEnum.ARCHIVADA},
+    EstadoIncapacidadEnum.ARCHIVADA: set(),
+}
+
+
+def _puede_ver_todo(rol: RolEnum) -> bool:
+    """El sistema define los roles que pueden visualizar todas las incapacidades."""
+    return rol in [RolEnum.ADMIN, RolEnum.GESTION_HUMANA, RolEnum.CONTABILIDAD]
+
+
+def _puede_ver_cie10(rol: RolEnum) -> bool:
+    """El sistema define los roles que pueden visualizar diagnóstico CIE10 sin ofuscación."""
+    return rol in [RolEnum.ADMIN, RolEnum.GESTION_HUMANA]
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=dict)
 async def registrar_incapacidad(
@@ -56,6 +88,13 @@ async def registrar_incapacidad(
         )
         db.add(nueva_incapacidad)
         await db.flush()
+
+        # El sistema registra el estado inicial para trazabilidad operativa.
+        db.add(HistorialEstadoIncapacidad(
+            incapacidad_id=nueva_incapacidad.id,
+            estado=EstadoIncapacidadEnum.REGISTRADA,
+            fecha_cambio=nueva_incapacidad.fecha_registro,
+        ))
 
         soportes_creados = []
         for soporte_in in incapacidad_in.soportes:
@@ -116,7 +155,7 @@ async def registrar_incapacidad(
             "dias_otorgados": nueva_incapacidad.dias_otorgados,
             "estado": nueva_incapacidad.estado.value,
             "fecha_registro": nueva_incapacidad.fecha_registro.isoformat(),
-            "diagnostico_cie10": nueva_incapacidad.diagnostico_cie10 if current_user.rol in [RolEnum.ADMIN, RolEnum.GESTION_HUMANA] else None,
+            "diagnostico_cie10": nueva_incapacidad.diagnostico_cie10 if _puede_ver_cie10(current_user.rol) else None,
             "soportes": [{"id": str(s.id), "tipo_documento": s.tipo_documento.value, "url_archivo": s.url_archivo} for s in soportes_creados],
         }
         return resp_dict
@@ -133,7 +172,7 @@ async def listar_incapacidades(
     db: AsyncSession = Depends(get_db)
 ):
     """El sistema lista las incapacidades según el rol del usuario."""
-    if current_user.rol in [RolEnum.ADMIN, RolEnum.GESTION_HUMANA]:
+    if _puede_ver_todo(current_user.rol):
         stmt = select(Incapacidad).options(selectinload(Incapacidad.colaborador), selectinload(Incapacidad.eps), selectinload(Incapacidad.soportes))
     else:
         stmt = select(Incapacidad).filter(Incapacidad.colaborador_id == current_user.id).options(selectinload(Incapacidad.colaborador), selectinload(Incapacidad.eps), selectinload(Incapacidad.soportes))
@@ -155,7 +194,7 @@ async def listar_incapacidades(
             "dias_otorgados": record.dias_otorgados,
             "estado": record.estado.value,
             "fecha_registro": record.fecha_registro.isoformat(),
-            "diagnostico_cie10": record.diagnostico_cie10 if current_user.rol in [RolEnum.ADMIN, RolEnum.GESTION_HUMANA] else None,
+            "diagnostico_cie10": record.diagnostico_cie10 if _puede_ver_cie10(current_user.rol) else None,
             "soportes": [{"id": str(s.id), "tipo_documento": s.tipo_documento.value, "url_archivo": s.url_archivo} for s in record.soportes] if record.soportes else [],
         }
         resultados.append(resp_dict)
@@ -178,7 +217,7 @@ async def obtener_incapacidad(
             raise HTTPException(status_code=404, detail="El sistema no encontró la incapacidad buscada.")
         
         # Control de acceso: solo ADMIN/GESTION_HUMANA pueden ver cualquier incapacidad, otros ven solo las propias
-        if current_user.rol not in [RolEnum.ADMIN, RolEnum.GESTION_HUMANA]:
+        if not _puede_ver_todo(current_user.rol):
             if incapacidad.colaborador_id != current_user.id:
                 raise HTTPException(status_code=403, detail="El sistema deniega el acceso a esta incapacidad.")
         
@@ -194,7 +233,7 @@ async def obtener_incapacidad(
             "dias_otorgados": incapacidad.dias_otorgados,
             "estado": incapacidad.estado.value,
             "fecha_registro": incapacidad.fecha_registro.isoformat(),
-            "diagnostico_cie10": incapacidad.diagnostico_cie10 if current_user.rol in [RolEnum.ADMIN, RolEnum.GESTION_HUMANA] else None,
+            "diagnostico_cie10": incapacidad.diagnostico_cie10 if _puede_ver_cie10(current_user.rol) else None,
             "soportes": [{"id": str(s.id), "tipo_documento": s.tipo_documento.value, "url_archivo": s.url_archivo} for s in incapacidad.soportes] if incapacidad.soportes else [],
         }
         return resp_dict
@@ -211,7 +250,7 @@ async def actualizar_estado(
     db: AsyncSession = Depends(get_db)
 ):
     """El sistema actualiza el estado de la incapacidad, validando ACID."""
-    if current_user.rol not in [RolEnum.ADMIN, RolEnum.GESTION_HUMANA, RolEnum.CONTABILIDAD]:
+    if current_user.rol not in [RolEnum.ADMIN, RolEnum.GESTION_HUMANA]:
         raise HTTPException(status_code=403, detail="El sistema deniega esta operación por falta de permisos.")
         
     try:
@@ -221,8 +260,22 @@ async def actualizar_estado(
         
         if not incapacidad:
             raise HTTPException(status_code=404, detail="El sistema no encontró la incapacidad buscada.")
-            
+
+        if estado_update.estado == incapacidad.estado:
+            raise HTTPException(status_code=400, detail="El sistema rechaza transiciones nulas de estado.")
+
+        siguientes = TRANSICIONES_VALIDAS.get(incapacidad.estado, set())
+        if estado_update.estado not in siguientes:
+            raise HTTPException(
+                status_code=400,
+                detail=f"El sistema rechaza la transición {incapacidad.estado.value} -> {estado_update.estado.value}."
+            )
+
         incapacidad.estado = estado_update.estado
+        db.add(HistorialEstadoIncapacidad(
+            incapacidad_id=incapacidad.id,
+            estado=estado_update.estado,
+        ))
         await db.commit()
         
         resp_dict = {
@@ -237,7 +290,7 @@ async def actualizar_estado(
             "dias_otorgados": incapacidad.dias_otorgados,
             "estado": incapacidad.estado.value,
             "fecha_registro": incapacidad.fecha_registro.isoformat(),
-            "diagnostico_cie10": incapacidad.diagnostico_cie10 if current_user.rol in [RolEnum.ADMIN, RolEnum.GESTION_HUMANA] else None,
+            "diagnostico_cie10": incapacidad.diagnostico_cie10 if _puede_ver_cie10(current_user.rol) else None,
             "soportes": [{"id": str(s.id), "tipo_documento": s.tipo_documento.value, "url_archivo": s.url_archivo} for s in incapacidad.soportes] if incapacidad.soportes else [],
         }
         return resp_dict
@@ -254,10 +307,42 @@ async def obtener_trazabilidad(
     db: AsyncSession = Depends(get_db)
 ):
     """El sistema retorna el ciclo de vida y los logs asociados a la incapacidad especificada."""
+    stmt = select(Incapacidad).where(Incapacidad.id == id).options(
+        selectinload(Incapacidad.historial_estados),
+    )
+    result = await db.execute(stmt)
+    incapacidad = result.scalars().first()
+
+    if not incapacidad:
+        raise HTTPException(status_code=404, detail="El sistema no encontró la incapacidad buscada.")
+
+    if not _puede_ver_todo(current_user.rol) and incapacidad.colaborador_id != current_user.id:
+        raise HTTPException(status_code=403, detail="El sistema deniega el acceso a esta trazabilidad.")
+
+    eventos = sorted(incapacidad.historial_estados, key=lambda e: e.fecha_cambio)
+    primera_fecha_por_estado = {}
+    logs = []
+    for ev in eventos:
+        logs.append({
+            "estado": ev.estado.value,
+            "fecha_cambio": ev.fecha_cambio.isoformat(),
+        })
+        if ev.estado not in primera_fecha_por_estado:
+            primera_fecha_por_estado[ev.estado] = ev.fecha_cambio
+
+    timeline = []
+    for estado in ESTADOS_ORDEN:
+        fecha_estado = primera_fecha_por_estado.get(estado)
+        timeline.append({
+            "estado": estado.value,
+            "fecha_cambio": fecha_estado.isoformat() if fecha_estado else None,
+            "alcanzado": bool(fecha_estado),
+            "es_actual": estado == incapacidad.estado,
+        })
+
     return {
-        "incapacidad_id": id,
-        "logs": [
-            {"evento": "REGISTRADA", "fecha": "2026-05-12T10:00:00Z"},
-            {"evento": "RADICADA", "fecha": "2026-05-12T10:30:00Z"}
-        ]
+        "incapacidad_id": str(incapacidad.id),
+        "estado_actual": incapacidad.estado.value,
+        "timeline": timeline,
+        "logs": logs,
     }

@@ -13,8 +13,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { StatusBadge } from '@/components/status-badge'
 import { ProtectedRoute } from '@/components/protected-route'
 import { ConciliationDrawer } from '@/components/conciliation-drawer'
+import { TraceabilityTimeline } from '@/components/traceability-timeline'
 import { disabilityService } from '@/lib/services'
-import type { Disability, SoporteDocumental } from '@/lib/types'
+import type { Disability, SoporteDocumental, TraceabilityResponse } from '@/lib/types'
 
 export default function DisabilityDetailPage() {
   return (
@@ -31,8 +32,10 @@ function DisabilityDetailContent() {
   
   const [disability, setDisability] = useState<Disability | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingTraceability, setIsLoadingTraceability] = useState(true)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [previewSupport, setPreviewSupport] = useState<SoporteDocumental | null>(null)
+  const [traceability, setTraceability] = useState<TraceabilityResponse | null>(null)
 
   useEffect(() => {
     if (disabilityId) {
@@ -45,10 +48,14 @@ function DisabilityDetailContent() {
       // The system would fetch from GET /api/incapacidades/{id} in production
       const data = await disabilityService.getById(disabilityId!)
       setDisability(data || null)
+
+      const traceabilityData = await disabilityService.getTraceability(disabilityId!)
+      setTraceability(traceabilityData)
     } catch (error) {
       console.error('Error fetching disability:', error)
     } finally {
       setIsLoading(false)
+      setIsLoadingTraceability(false)
     }
   }
 
@@ -246,7 +253,7 @@ function DisabilityDetailContent() {
                           </Button>
                         </div>
                       </div>
-                      <div className="h-[80vh] bg-[#000]">
+                      <div className="h-[80vh] bg-black">
                         {/* If PDF, embed; otherwise show iframe as fallback */}
                         {previewSupport.urlArchivo.toLowerCase().endsWith('.pdf') ? (
                           <iframe
@@ -287,7 +294,7 @@ function DisabilityDetailContent() {
                 <CardTitle className="text-[#E0E0E0]">Acciones</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {disability.status === 'APROBADA' && (
+                {(disability.status === 'RADICADA' || disability.status === 'EN_MORA') && (
                   <Button
                     className="w-full bg-[#00E676] text-[#121212] hover:bg-[#00E676]/90"
                     onClick={() => setIsDrawerOpen(true)}
@@ -302,6 +309,18 @@ function DisabilityDetailContent() {
                 >
                   Ver trazabilidad
                 </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="mt-6 border-[#2A2A2A] bg-[#1E1E1E]">
+              <CardHeader>
+                <CardTitle className="text-[#E0E0E0]">Trazabilidad</CardTitle>
+                <CardDescription className="text-[#9E9E9E]">
+                  Línea de tiempo completa de estados y transiciones
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <TraceabilityTimeline data={traceability} isLoading={isLoadingTraceability} />
               </CardContent>
             </Card>
           </div>

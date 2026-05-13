@@ -33,10 +33,6 @@ const statusConfig: Record<DisabilityStatus, { label: string; className: string 
     label: 'En Mora',
     className: 'bg-[#FF5252]/10 text-[#FF5252] border-[#FF5252]/30',
   },
-  APROBADA: {
-    label: 'Aprobada',
-    className: 'bg-[#00E676]/10 text-[#00E676] border-[#00E676]/30',
-  },
   PAGADA: {
     label: 'Pagada',
     className: 'bg-[#00E676]/10 text-[#00E676] border-[#00E676]/30',

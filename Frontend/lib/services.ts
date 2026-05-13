@@ -11,6 +11,7 @@ import type {
   Disability,
   ExpirationAlert,
   DisabilityStatus,
+  TraceabilityResponse,
 } from './types'
 
 /**
@@ -155,9 +156,23 @@ export const disabilityService = {
     }
   },
   
-  getTraceability: async (id: string): Promise<{ logs: any[] }> => {
+  getTraceability: async (id: string): Promise<TraceabilityResponse> => {
     const response = await api.get(`/incapacidades/${id}/trazabilidad`)
-    return response.data
+    const data = response.data
+    return {
+      incapacidadId: data.incapacidad_id,
+      estadoActual: data.estado_actual,
+      timeline: (data.timeline || []).map((entry: any) => ({
+        estado: entry.estado,
+        fechaCambio: entry.fecha_cambio,
+        alcanzado: entry.alcanzado,
+        esActual: entry.es_actual,
+      })),
+      logs: (data.logs || []).map((entry: any) => ({
+        estado: entry.estado,
+        fechaCambio: entry.fecha_cambio,
+      })),
+    }
   },
   
   updateStatus: async (id: string, status: DisabilityStatus): Promise<Disability> => {
@@ -235,7 +250,15 @@ export const disabilityService = {
 export const alertService = {
   getExpirationAlerts: async (): Promise<ExpirationAlert[]> => {
     const response = await api.get('/alertas/vencimientos')
-    return response.data
+    return (response.data || []).map((item: any) => ({
+      id: item.id,
+      disabilityId: item.disabilityId,
+      employeeName: item.employeeName,
+      daysUntilExpiration: item.daysUntilExpiration,
+      expirationDate: item.expirationDate,
+      status: item.status,
+      alertLevel: item.alertLevel,
+    }))
   },
 }
 
@@ -248,7 +271,7 @@ export const financeService = {
       incapacidad_id: disabilityId,
       valor_pagado: amountPaid
     })
-    const item = response.data
+    const item = response.data?.incapacidad ?? response.data
     return {
       id: item.id,
       employeeId: item.colaborador_id,

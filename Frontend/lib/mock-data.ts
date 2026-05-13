@@ -109,7 +109,7 @@ export const mockDisabilities: Disability[] = [
     diagnosisCode: 'M23.2',
     eps: 'Compensar EPS',
     totalDays: 21,
-    status: 'APROBADA',
+    status: 'RADICADA',
     createdAt: '2024-01-21',
     updatedAt: '2024-01-22',
     expirationDate: '2024-02-20',
